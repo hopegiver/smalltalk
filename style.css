@@ -279,6 +279,53 @@ h1 {
     color: #333;
 }
 
+.correct-answer-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.answer-label {
+    font-size: 0.8em;
+    opacity: 0.9;
+    margin-bottom: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.correct-answer-text {
+    font-size: 1.8em;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.user-answer-box {
+    background: #f8f9fa;
+    padding: 25px 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    border: 2px solid #e0e0e0;
+}
+
+.answer-label-small {
+    font-size: 0.7em;
+    color: #999;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.user-answer-text {
+    font-size: 1.1em;
+    color: #666;
+    font-weight: 400;
+}
+
 .recording-indicator {
     display: flex;
     align-items: center;
@@ -577,6 +624,22 @@ h1 {
     .answer-box {
         font-size: 1.2em;
         padding: 30px 20px;
+    }
+
+    .correct-answer-box {
+        padding: 30px 20px;
+    }
+
+    .correct-answer-text {
+        font-size: 1.5em;
+    }
+
+    .user-answer-box {
+        padding: 20px 15px;
+    }
+
+    .user-answer-text {
+        font-size: 1em;
     }
 
     .btn-group {

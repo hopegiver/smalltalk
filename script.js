@@ -439,8 +439,8 @@ function showAnswerScreen(question, userAnswer, isCorrect) {
 
     showScreen('answerScreen');
 
-    // Auto next after 3 seconds
-    let countdown = 3;
+    // Auto next after 5 seconds
+    let countdown = 5;
     document.getElementById('autoNextTimer').textContent = `${countdown}초 후 자동으로 넘어갑니다...`;
 
     autoNextTimer = setInterval(() => {
