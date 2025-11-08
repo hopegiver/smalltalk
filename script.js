@@ -300,8 +300,29 @@ function selectQuestions() {
     }
 
     if (quizMode === 'random') {
-        // Completely random 10 questions
-        return shuffleArray(sentences).slice(0, 10);
+        // Random mode - prioritize less-practiced sentences
+        const withAttempts = sentences.map(sentence => {
+            const prog = progress.find(p => p.id === sentence.id) || {
+                attempts: 0
+            };
+            return { ...sentence, attempts: prog.attempts };
+        });
+
+        // Check if all sentences have been practiced at least once
+        const minAttempts = Math.min(...withAttempts.map(s => s.attempts));
+
+        // Filter: only show unpracticed sentences until all are done at least once
+        let candidates;
+        if (minAttempts === 0) {
+            // Not all sentences practiced yet - only show unpracticed ones
+            candidates = withAttempts.filter(s => s.attempts === 0);
+        } else {
+            // All sentences practiced at least once - use least-practiced pool
+            candidates = withAttempts.slice().sort((a, b) => a.attempts - b.attempts);
+            candidates = candidates.slice(0, Math.min(30, candidates.length));
+        }
+
+        return shuffleArray(candidates).slice(0, Math.min(10, candidates.length));
     }
 
     // Smart mode - score-based (lowest scores first, then least attempts)
