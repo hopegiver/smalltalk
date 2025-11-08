@@ -82,17 +82,12 @@ function initSpeechRecognition() {
         currentTranscript = (finalTranscript + interimTranscript).trim();
         document.getElementById('transcript').textContent = currentTranscript || '당신의 답변이 여기에 표시됩니다...';
 
-        // If we have speech, stop recognition and don't restart
+        // If we have speech, cancel the timeout (keep recording, just don't auto-submit)
         if (hasSpeech) {
-            shouldRestart = false;
+            shouldRestart = false; // Don't restart after end
             if (recognitionTimeout) {
                 clearTimeout(recognitionTimeout);
                 recognitionTimeout = null;
-            }
-            try {
-                recognition.stop();
-            } catch (e) {
-                console.log('Recognition already stopped');
             }
         }
     };
