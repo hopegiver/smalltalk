@@ -46,23 +46,19 @@ function initSpeechRecognition() {
         hasSpeech = false;
         console.log('Speech recognition started');
 
-        // Set 10 second timeout - if no speech, auto-submit
+        // Set 30 second timeout - maximum recording time
         if (recognitionTimeout) {
             clearTimeout(recognitionTimeout);
         }
         recognitionTimeout = setTimeout(() => {
-            console.log('10 seconds passed, auto-submitting...');
-            if (!hasSpeech) {
-                // No speech detected in 10 seconds, auto-submit
-                shouldRestart = false;
-                try {
-                    recognition.stop();
-                } catch (e) {
-                    console.log('Recognition stop error');
-                }
-                checkAnswer();
+            console.log('30 seconds passed, stopping recording...');
+            shouldRestart = false;
+            try {
+                recognition.stop();
+            } catch (e) {
+                console.log('Recognition stop error');
             }
-        }, 10000);
+        }, 30000);
     };
 
     recognition.onresult = (event) => {
