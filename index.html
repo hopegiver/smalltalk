@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English SmallTalk Trainer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen active">
+            <div class="header">
+                <h1>English SmallTalk</h1>
+                <p class="subtitle">매일 10분, 영어 스몰톡 마스터</p>
+            </div>
+
+            <div class="quick-stats">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-icon">🔥</div>
+                    <div class="quick-stat-value" id="quickStreak">0</div>
+                    <div class="quick-stat-label">연속</div>
+                </div>
+                <div class="quick-stat-item">
+                    <div class="quick-stat-icon">✅</div>
+                    <div class="quick-stat-value" id="quickMastered">0</div>
+                    <div class="quick-stat-label">완료</div>
+                </div>
+                <div class="quick-stat-item">
+                    <div class="quick-stat-icon">📊</div>
+                    <div class="quick-stat-value" id="quickAccuracy">0%</div>
+                    <div class="quick-stat-label">정확도</div>
+                </div>
+            </div>
+
+            <div id="micWarning" class="warning" style="display: none;">
+                ⚠️ 마이크 권한이 필요합니다. Chrome 또는 Edge 브라우저를 사용하세요.
+            </div>
+
+            <div class="menu-grid">
+                <div class="menu-item" onclick="startQuiz('smart')">
+                    <div class="menu-icon">🎯</div>
+                    <div class="menu-title">스마트 학습</div>
+                    <div class="menu-desc">AI 추천</div>
+                </div>
+                <div class="menu-item" onclick="startQuiz('random')">
+                    <div class="menu-icon">🎲</div>
+                    <div class="menu-title">랜덤 테스트</div>
+                    <div class="menu-desc">무작위</div>
+                </div>
+                <div class="menu-item" id="wrongOnlyMenu" onclick="startQuiz('wrong')">
+                    <div class="menu-icon">❌</div>
+                    <div class="menu-title">틀린 문제</div>
+                    <div class="menu-desc" id="wrongCount">0개</div>
+                </div>
+                <div class="menu-item" onclick="showStatistics()">
+                    <div class="menu-icon">📊</div>
+                    <div class="menu-title">학습 통계</div>
+                    <div class="menu-desc">분석</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Screen -->
+        <div id="statsScreen" class="screen">
+            <h1>📊 학습 통계</h1>
+
+            <div class="stats-detail">
+                <div class="stat-card">
+                    <div class="stat-card-icon">🔥</div>
+                    <div class="stat-card-value" id="streakDays">0일</div>
+                    <div class="stat-card-label">연속 학습</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon">📅</div>
+                    <div class="stat-card-value" id="totalDays">0일</div>
+                    <div class="stat-card-label">총 학습 일수</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-value" id="totalQuestions">0개</div>
+                    <div class="stat-card-label">총 학습 문제</div>
+                </div>
+            </div>
+
+            <div class="today-stats">
+                <h2>오늘의 학습</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제 수</div>
+                        <div class="stat-value" id="todayQuestions">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답</div>
+                        <div class="stat-value" id="todayCorrect">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답률</div>
+                        <div class="stat-value" id="todayAccuracy">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weekly-calendar" id="weeklyCalendar">
+                <h2>최근 7일 학습 현황</h2>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <button class="btn" onclick="closeStatistics()">닫기</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">문제</div>
+                    <div class="stat-value" id="currentQuestion">1/10</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">정답</div>
+                    <div class="stat-value" id="currentCorrect">0</div>
+                </div>
+            </div>
+
+            <div class="question-box" id="questionText">한글 문장이 여기에 표시됩니다</div>
+
+            <div class="recording-indicator" id="recordingIndicator">
+                <div class="recording-dot"></div>
+                <span>녹음 중... 영어로 말해보세요</span>
+            </div>
+
+            <div class="transcript" id="transcript">당신의 답변이 여기에 표시됩니다...</div>
+
+            <div class="btn-group">
+                <button class="btn" id="confirmBtn" onclick="checkAnswer()">확인</button>
+                <button class="btn secondary" onclick="goHome()">처음으로</button>
+            </div>
+        </div>
+
+        <!-- Answer Screen -->
+        <div id="answerScreen" class="screen">
+            <div class="result-icon" id="resultIcon">✓</div>
+
+            <div class="answer-box">
+                <div style="color: #999; font-size: 0.7em; margin-bottom: 10px;">정답</div>
+                <div id="correctAnswer">Correct answer here</div>
+            </div>
+
+            <div class="transcript" id="userAnswerDisplay">
+                <div style="color: #999; font-size: 0.7em; margin-bottom: 10px;">당신의 답변</div>
+                <div id="userAnswer">Your answer here</div>
+            </div>
+
+            <div class="timer" id="autoNextTimer"></div>
+
+            <div class="btn-group">
+                <button class="btn" onclick="nextQuestion()">다음</button>
+                <button class="btn secondary" onclick="goHome()">처음으로</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="resultScreen" class="screen">
+            <h1>🎉 테스트 완료!</h1>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">정답</div>
+                    <div class="stat-value" id="finalCorrect">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">오답</div>
+                    <div class="stat-value" id="finalWrong">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">점수</div>
+                    <div class="stat-value" id="finalScore">0%</div>
+                </div>
+            </div>
+
+            <div class="result-list" id="resultList"></div>
+
+            <button class="btn" onclick="restartQuiz()">다시 시작</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
