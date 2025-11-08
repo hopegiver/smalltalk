@@ -132,7 +132,7 @@ function initSpeechRecognition() {
 function loadProgress() {
     const progress = localStorage.getItem('englishProgress');
     const dataVersion = localStorage.getItem('dataVersion');
-    const currentVersion = 'v4'; // Increment when data structure changes
+    const currentVersion = 'v5'; // Increment when data structure changes
 
     // Reset if version mismatch (structure changed)
     if (dataVersion !== currentVersion) {
@@ -143,6 +143,7 @@ function loadProgress() {
             id: s.id,
             score: 0,
             attempts: 0,
+            wrongCount: 0,
             lastSeen: null
         }));
     }
@@ -155,6 +156,7 @@ function loadProgress() {
         id: s.id,
         score: 0,
         attempts: 0,
+        wrongCount: 0,
         lastSeen: null
     }));
 }
@@ -437,6 +439,7 @@ function checkAnswer() {
             progress[progIndex].score += 10; // Add 10 points for correct answer
         } else {
             progress[progIndex].score -= 20; // Subtract 20 points for wrong answer
+            progress[progIndex].wrongCount++; // Increment wrong count
         }
         progress[progIndex].lastSeen = Date.now();
         saveProgress(progress);
