@@ -639,10 +639,8 @@ if ('serviceWorker' in navigator) {
             .then((registration) => {
                 console.log('[App] ServiceWorker registered:', registration);
 
-                // Check for updates every 60 seconds
-                setInterval(() => {
-                    registration.update();
-                }, 60000);
+                // Check for updates when app loads
+                registration.update();
 
                 // Handle updates
                 registration.addEventListener('updatefound', () => {
