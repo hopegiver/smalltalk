@@ -256,23 +256,27 @@ function selectQuestions() {
             lastSeen: null
         };
 
-        // Higher priority for wrong answers and unseen questions
-        let priority = 100;
+        // Start with base priority
+        let priority = 0;
 
+        // Highest priority: wrong answers
         if (prog.wrongCount > 0) {
-            priority += prog.wrongCount * 50; // Wrong answers get high priority
+            priority = 1000 + prog.wrongCount * 100;
         }
-
-        if (prog.correctCount === 0) {
-            priority += 30; // Never seen before
-        } else {
-            priority -= prog.correctCount * 10; // Lower priority for correct answers
+        // Second priority: never seen before
+        else if (prog.correctCount === 0) {
+            priority = 500;
         }
-
-        // Time-based priority (seen long ago get higher priority)
-        if (prog.lastSeen) {
-            const daysSince = (now - prog.lastSeen) / (1000 * 60 * 60 * 24);
-            priority += daysSince * 5;
+        // Lowest priority: already answered correctly
+        else {
+            priority = 100;
+            // Time-based priority (only for already-seen questions)
+            if (prog.lastSeen) {
+                const daysSince = (now - prog.lastSeen) / (1000 * 60 * 60 * 24);
+                priority += daysSince * 10;
+            }
+            // Lower priority for multiple correct answers
+            priority -= prog.correctCount * 20;
         }
 
         return { ...sentence, priority, progress: prog };
