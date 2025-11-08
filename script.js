@@ -10,6 +10,8 @@ let correctCount = 0;
 let quizResults = [];
 let autoNextTimer = null;
 let quizMode = 'smart'; // 'smart', 'random', 'wrong'
+let isRecording = false;
+let shouldRestart = false;
 
 // Load data from JSON file
 async function loadData() {
@@ -35,6 +37,12 @@ function initSpeechRecognition() {
     recognition.lang = 'en-US';
     recognition.continuous = true;
     recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+        isRecording = true;
+        console.log('Speech recognition started');
+    };
 
     recognition.onresult = (event) => {
         let interimTranscript = '';
@@ -53,10 +61,33 @@ function initSpeechRecognition() {
         document.getElementById('transcript').textContent = currentTranscript || '당신의 답변이 여기에 표시됩니다...';
     };
 
+    recognition.onend = () => {
+        isRecording = false;
+        console.log('Speech recognition ended');
+
+        // Auto-restart if still in quiz mode and not manually stopped
+        if (shouldRestart) {
+            setTimeout(() => {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.log('Failed to restart recognition');
+                }
+            }, 100);
+        }
+    };
+
     recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         if (event.error === 'not-allowed') {
             document.getElementById('micWarning').style.display = 'block';
+            shouldRestart = false;
+        } else if (event.error === 'no-speech') {
+            // No speech detected, will auto-restart via onend
+            console.log('No speech detected, will restart');
+        } else if (event.error === 'aborted') {
+            // Recognition was aborted, don't restart
+            shouldRestart = false;
         }
     };
 
@@ -294,10 +325,15 @@ function loadQuestion() {
     currentTranscript = '';
     document.getElementById('transcript').textContent = '당신의 답변이 여기에 표시됩니다...';
 
+    // Enable auto-restart
+    shouldRestart = true;
+
     // Start recording after a short delay
     setTimeout(() => {
         try {
-            recognition.start();
+            if (!isRecording) {
+                recognition.start();
+            }
         } catch (e) {
             console.log('Recognition already started');
         }
@@ -306,7 +342,8 @@ function loadQuestion() {
 
 // Check answer
 function checkAnswer() {
-    // Stop recognition
+    // Disable auto-restart and stop recognition
+    shouldRestart = false;
     try {
         recognition.stop();
     } catch (e) {
@@ -421,6 +458,7 @@ function showAnswerScreen(question, userAnswer, isCorrect) {
 function nextQuestion() {
     if (autoNextTimer) {
         clearInterval(autoNextTimer);
+        autoNextTimer = null;
     }
 
     currentQuestionIndex++;
@@ -430,6 +468,16 @@ function nextQuestion() {
 
 // Show results
 function showResults() {
+    // Stop recognition completely
+    shouldRestart = false;
+    try {
+        if (recognition) {
+            recognition.stop();
+        }
+    } catch (e) {
+        console.log('Recognition already stopped');
+    }
+
     const wrongCount = quizResults.filter(r => !r.correct).length;
     const score = Math.round((correctCount / quizResults.length) * 100);
 
@@ -470,7 +518,8 @@ function restartQuiz() {
 
 // Go back to home (cancel current quiz)
 function goHome() {
-    // Stop recognition if running
+    // Disable auto-restart and stop recognition
+    shouldRestart = false;
     try {
         if (recognition) {
             recognition.stop();
