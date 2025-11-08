@@ -97,13 +97,29 @@ function initSpeechRecognition() {
 // Load learning progress from localStorage
 function loadProgress() {
     const progress = localStorage.getItem('englishProgress');
+    const dataVersion = localStorage.getItem('dataVersion');
+    const currentVersion = 'v2'; // Increment when data structure changes
+
+    // Reset if version mismatch (structure changed)
+    if (dataVersion !== currentVersion) {
+        console.log('Data structure changed, resetting progress...');
+        localStorage.removeItem('englishProgress');
+        localStorage.setItem('dataVersion', currentVersion);
+        return sentences.map(s => ({
+            id: s.id,
+            score: 0,
+            wrongCount: 0,
+            lastSeen: null
+        }));
+    }
+
     if (progress) {
         return JSON.parse(progress);
     }
     // Initialize progress for all sentences
     return sentences.map(s => ({
         id: s.id,
-        correctCount: 0,
+        score: 0,
         wrongCount: 0,
         lastSeen: null
     }));
@@ -185,12 +201,12 @@ function updateStartScreenStats() {
     if (sentences.length === 0) return;
 
     const progress = loadProgress();
-    const mastered = progress.filter(p => p.correctCount >= 3 && p.wrongCount === 0).length;
-    const totalAttempts = progress.reduce((sum, p) => sum + p.correctCount + p.wrongCount, 0);
-    const totalCorrect = progress.reduce((sum, p) => sum + p.correctCount, 0);
+    const mastered = progress.filter(p => p.score >= 30).length; // 3+ correct answers = 30+ points
+    const totalAttempts = progress.reduce((sum, p) => sum + (p.score / 10) + p.wrongCount, 0);
+    const totalCorrect = progress.reduce((sum, p) => sum + (p.score / 10), 0);
     const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
 
-    const wrongOnly = progress.filter(p => p.wrongCount > 0).length;
+    const wrongOnly = progress.filter(p => p.score === 0 && p.wrongCount > 0).length;
     const streak = calculateStreak();
 
     // Update quick stats
@@ -222,16 +238,15 @@ function shuffleArray(array) {
     return shuffled;
 }
 
-// Select 10 questions using spaced repetition algorithm
+// Select 10 questions using score-based algorithm
 function selectQuestions() {
     const progress = loadProgress();
-    const now = Date.now();
 
     if (quizMode === 'wrong') {
-        // Only wrong answers
+        // Only wrong answers (score 0 and wrongCount > 0)
         const wrongSentences = sentences.filter(sentence => {
             const prog = progress.find(p => p.id === sentence.id);
-            return prog && prog.wrongCount > 0;
+            return prog && prog.score === 0 && prog.wrongCount > 0;
         });
 
         if (wrongSentences.length === 0) {
@@ -248,43 +263,20 @@ function selectQuestions() {
         return shuffleArray(sentences).slice(0, 10);
     }
 
-    // Smart mode - spaced repetition
-    const prioritized = sentences.map(sentence => {
+    // Smart mode - score-based (lowest scores first)
+    const scored = sentences.map(sentence => {
         const prog = progress.find(p => p.id === sentence.id) || {
-            correctCount: 0,
+            score: 0,
             wrongCount: 0,
             lastSeen: null
         };
 
-        // Start with base priority
-        let priority = 0;
-
-        // Highest priority: wrong answers
-        if (prog.wrongCount > 0) {
-            priority = 1000 + prog.wrongCount * 100;
-        }
-        // Second priority: never seen before
-        else if (prog.correctCount === 0) {
-            priority = 500;
-        }
-        // Lowest priority: already answered correctly
-        else {
-            priority = 100;
-            // Time-based priority (only for already-seen questions)
-            if (prog.lastSeen) {
-                const daysSince = (now - prog.lastSeen) / (1000 * 60 * 60 * 24);
-                priority += daysSince * 10;
-            }
-            // Lower priority for multiple correct answers
-            priority -= prog.correctCount * 20;
-        }
-
-        return { ...sentence, priority, progress: prog };
+        return { ...sentence, score: prog.score, progress: prog };
     });
 
-    // Sort by priority and select top 10
-    prioritized.sort((a, b) => b.priority - a.priority);
-    return prioritized.slice(0, 10);
+    // Sort by score (ascending - lowest first) and select top 10
+    scored.sort((a, b) => a.score - b.score);
+    return scored.slice(0, 10);
 }
 
 // Start quiz with specific mode
@@ -376,9 +368,9 @@ function checkAnswer() {
     const progIndex = progress.findIndex(p => p.id === question.id);
     if (progIndex !== -1) {
         if (isCorrect) {
-            progress[progIndex].correctCount++;
+            progress[progIndex].score += 10; // Add 10 points for correct answer
         } else {
-            progress[progIndex].wrongCount++;
+            progress[progIndex].wrongCount++; // No score change for wrong answer
         }
         progress[progIndex].lastSeen = Date.now();
         saveProgress(progress);
