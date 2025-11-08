@@ -1,2 +1,5 @@
 src/
 .claude/
+
+# SSL certificates
+*.pem
