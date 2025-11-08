@@ -132,7 +132,7 @@ function initSpeechRecognition() {
 function loadProgress() {
     const progress = localStorage.getItem('englishProgress');
     const dataVersion = localStorage.getItem('dataVersion');
-    const currentVersion = 'v2'; // Increment when data structure changes
+    const currentVersion = 'v4'; // Increment when data structure changes
 
     // Reset if version mismatch (structure changed)
     if (dataVersion !== currentVersion) {
@@ -142,7 +142,7 @@ function loadProgress() {
         return sentences.map(s => ({
             id: s.id,
             score: 0,
-            wrongCount: 0,
+            attempts: 0,
             lastSeen: null
         }));
     }
@@ -154,7 +154,7 @@ function loadProgress() {
     return sentences.map(s => ({
         id: s.id,
         score: 0,
-        wrongCount: 0,
+        attempts: 0,
         lastSeen: null
     }));
 }
@@ -236,11 +236,16 @@ function updateStartScreenStats() {
 
     const progress = loadProgress();
     const mastered = progress.filter(p => p.score >= 30).length; // 3+ correct answers = 30+ points
-    const totalAttempts = progress.reduce((sum, p) => sum + (p.score / 10) + p.wrongCount, 0);
-    const totalCorrect = progress.reduce((sum, p) => sum + (p.score / 10), 0);
+
+    // Calculate total attempts and correct answers from score
+    // Positive scores: correct answers = score/10
+    // Negative scores: wrong answers = abs(score)/20, correct answers = 0
+    const totalCorrect = progress.reduce((sum, p) => sum + Math.max(0, Math.floor(p.score / 10)), 0);
+    const totalWrong = progress.reduce((sum, p) => sum + Math.max(0, Math.floor(Math.abs(Math.min(0, p.score)) / 20)), 0);
+    const totalAttempts = totalCorrect + totalWrong;
     const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
 
-    const wrongOnly = progress.filter(p => p.score === 0 && p.wrongCount > 0).length;
+    const wrongOnly = progress.filter(p => p.score < 0).length;
     const streak = calculateStreak();
 
     // Update quick stats
@@ -277,10 +282,10 @@ function selectQuestions() {
     const progress = loadProgress();
 
     if (quizMode === 'wrong') {
-        // Only wrong answers (score 0 and wrongCount > 0)
+        // Only wrong answers (score < 0)
         const wrongSentences = sentences.filter(sentence => {
             const prog = progress.find(p => p.id === sentence.id);
-            return prog && prog.score === 0 && prog.wrongCount > 0;
+            return prog && prog.score < 0;
         });
 
         if (wrongSentences.length === 0) {
@@ -297,19 +302,24 @@ function selectQuestions() {
         return shuffleArray(sentences).slice(0, 10);
     }
 
-    // Smart mode - score-based (lowest scores first)
+    // Smart mode - score-based (lowest scores first, then least attempts)
     const scored = sentences.map(sentence => {
         const prog = progress.find(p => p.id === sentence.id) || {
             score: 0,
-            wrongCount: 0,
+            attempts: 0,
             lastSeen: null
         };
 
-        return { ...sentence, score: prog.score, progress: prog };
+        return { ...sentence, score: prog.score, attempts: prog.attempts, progress: prog };
     });
 
-    // Sort by score (ascending - lowest first) and select top 10
-    scored.sort((a, b) => a.score - b.score);
+    // Sort by score (ascending), then by attempts (ascending)
+    scored.sort((a, b) => {
+        if (a.score !== b.score) {
+            return a.score - b.score; // Lower score first
+        }
+        return a.attempts - b.attempts; // If same score, less attempts first
+    });
     return scored.slice(0, 10);
 }
 
@@ -422,10 +432,11 @@ function checkAnswer() {
     const progress = loadProgress();
     const progIndex = progress.findIndex(p => p.id === question.id);
     if (progIndex !== -1) {
+        progress[progIndex].attempts++; // Increment attempts count
         if (isCorrect) {
             progress[progIndex].score += 10; // Add 10 points for correct answer
         } else {
-            progress[progIndex].wrongCount++; // No score change for wrong answer
+            progress[progIndex].score -= 20; // Subtract 20 points for wrong answer
         }
         progress[progIndex].lastSeen = Date.now();
         saveProgress(progress);
