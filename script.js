@@ -637,11 +637,45 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
-                console.log('ServiceWorker registered:', registration);
+                console.log('[App] ServiceWorker registered:', registration);
+
+                // Check for updates every 60 seconds
+                setInterval(() => {
+                    registration.update();
+                }, 60000);
+
+                // Handle updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('[App] New service worker found, installing...');
+
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker is ready
+                            console.log('[App] New version available!');
+
+                            // Show update notification
+                            if (confirm('새로운 버전이 있습니다. 지금 업데이트하시겠습니까?')) {
+                                newWorker.postMessage({ action: 'skipWaiting' });
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
             })
             .catch((error) => {
-                console.log('ServiceWorker registration failed:', error);
+                console.log('[App] ServiceWorker registration failed:', error);
             });
+
+        // Reload page when new service worker takes control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                console.log('[App] Controller changed, reloading page...');
+                refreshing = true;
+                window.location.reload();
+            }
+        });
     });
 }
 
