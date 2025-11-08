@@ -12,6 +12,8 @@ let autoNextTimer = null;
 let quizMode = 'smart'; // 'smart', 'random', 'wrong'
 let isRecording = false;
 let shouldRestart = false;
+let recognitionTimeout = null;
+let hasSpeech = false;
 
 // Load data from JSON file
 async function loadData() {
@@ -41,7 +43,26 @@ function initSpeechRecognition() {
 
     recognition.onstart = () => {
         isRecording = true;
+        hasSpeech = false;
         console.log('Speech recognition started');
+
+        // Set 10 second timeout - if no speech, auto-submit
+        if (recognitionTimeout) {
+            clearTimeout(recognitionTimeout);
+        }
+        recognitionTimeout = setTimeout(() => {
+            console.log('10 seconds passed, auto-submitting...');
+            if (!hasSpeech) {
+                // No speech detected in 10 seconds, auto-submit
+                shouldRestart = false;
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    console.log('Recognition stop error');
+                }
+                checkAnswer();
+            }
+        }, 10000);
     };
 
     recognition.onresult = (event) => {
@@ -52,6 +73,7 @@ function initSpeechRecognition() {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
                 finalTranscript += transcript + ' ';
+                hasSpeech = true; // Speech detected
             } else {
                 interimTranscript += transcript;
             }
@@ -59,34 +81,55 @@ function initSpeechRecognition() {
 
         currentTranscript = (finalTranscript + interimTranscript).trim();
         document.getElementById('transcript').textContent = currentTranscript || '당신의 답변이 여기에 표시됩니다...';
+
+        // If we have speech, stop recognition and don't restart
+        if (hasSpeech) {
+            shouldRestart = false;
+            if (recognitionTimeout) {
+                clearTimeout(recognitionTimeout);
+                recognitionTimeout = null;
+            }
+            try {
+                recognition.stop();
+            } catch (e) {
+                console.log('Recognition already stopped');
+            }
+        }
     };
 
     recognition.onend = () => {
         isRecording = false;
         console.log('Speech recognition ended');
 
-        // Auto-restart if still in quiz mode and not manually stopped
-        if (shouldRestart) {
-            setTimeout(() => {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    console.log('Failed to restart recognition');
-                }
-            }, 100);
+        // Clear timeout if exists
+        if (recognitionTimeout) {
+            clearTimeout(recognitionTimeout);
+            recognitionTimeout = null;
         }
+
+        // Don't auto-restart anymore
+        shouldRestart = false;
     };
 
     recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
+
+        // Clear timeout on error
+        if (recognitionTimeout) {
+            clearTimeout(recognitionTimeout);
+            recognitionTimeout = null;
+        }
+
         if (event.error === 'not-allowed') {
             document.getElementById('micWarning').style.display = 'block';
             shouldRestart = false;
         } else if (event.error === 'no-speech') {
-            // No speech detected, will auto-restart via onend
-            console.log('No speech detected, will restart');
+            console.log('No speech detected');
+            shouldRestart = false;
         } else if (event.error === 'aborted') {
-            // Recognition was aborted, don't restart
+            shouldRestart = false;
+        } else if (event.error === 'audio-capture') {
+            console.log('Audio capture error');
             shouldRestart = false;
         }
     };
@@ -329,25 +372,46 @@ function loadQuestion() {
 
     // Reset transcript and start recording
     currentTranscript = '';
-    document.getElementById('transcript').textContent = '당신의 답변이 여기에 표시됩니다...';
+    const transcriptEl = document.getElementById('transcript');
+    transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
 
-    // Enable auto-restart
-    shouldRestart = true;
+    // Add click handler for re-recording
+    transcriptEl.onclick = () => {
+        if (!isRecording) {
+            startRecording();
+        }
+    };
+    transcriptEl.style.cursor = 'pointer';
 
     // Start recording after a short delay
     setTimeout(() => {
-        try {
-            if (!isRecording) {
-                recognition.start();
-            }
-        } catch (e) {
-            console.log('Recognition already started');
-        }
+        startRecording();
     }, 500);
+}
+
+// Start recording with 10 second timeout
+function startRecording() {
+    currentTranscript = '';
+    hasSpeech = false;
+    document.getElementById('transcript').textContent = '녹음 중... 영어로 말해보세요';
+
+    try {
+        if (!isRecording) {
+            recognition.start();
+        }
+    } catch (e) {
+        console.log('Recognition already started');
+    }
 }
 
 // Check answer
 function checkAnswer() {
+    // Clear timeout if exists
+    if (recognitionTimeout) {
+        clearTimeout(recognitionTimeout);
+        recognitionTimeout = null;
+    }
+
     // Disable auto-restart and stop recognition
     shouldRestart = false;
     try {
@@ -524,6 +588,12 @@ function restartQuiz() {
 
 // Go back to home (cancel current quiz)
 function goHome() {
+    // Clear recognition timeout
+    if (recognitionTimeout) {
+        clearTimeout(recognitionTimeout);
+        recognitionTimeout = null;
+    }
+
     // Disable auto-restart and stop recognition
     shouldRestart = false;
     try {
@@ -548,6 +618,35 @@ function goHome() {
 
 // Show screen
 function showScreen(screenId, addToHistory = true) {
+    // If going to start screen, clean up everything
+    if (screenId === 'startScreen') {
+        // Clear recognition timeout
+        if (recognitionTimeout) {
+            clearTimeout(recognitionTimeout);
+            recognitionTimeout = null;
+        }
+
+        // Stop recognition
+        shouldRestart = false;
+        if (recognition) {
+            try {
+                recognition.stop();
+            } catch (e) {
+                console.log('Recognition already stopped');
+            }
+        }
+
+        // Clear auto-next timer
+        if (autoNextTimer) {
+            clearInterval(autoNextTimer);
+            autoNextTimer = null;
+        }
+
+        // Reset states
+        isRecording = false;
+        hasSpeech = false;
+    }
+
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
@@ -680,6 +779,12 @@ if ('serviceWorker' in navigator) {
 
 // Handle browser back button
 window.addEventListener('popstate', (event) => {
+    // Clear recognition timeout
+    if (recognitionTimeout) {
+        clearTimeout(recognitionTimeout);
+        recognitionTimeout = null;
+    }
+
     // Stop recognition and timers when navigating back
     shouldRestart = false;
     if (recognition) {
