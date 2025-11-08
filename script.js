@@ -301,6 +301,16 @@ function startQuiz(mode = 'smart') {
     correctCount = 0;
     quizResults = [];
 
+    // Update quiz header based on mode
+    const quizHeader = document.getElementById('quizHeader');
+    if (mode === 'smart') {
+        quizHeader.textContent = '🎯 스마트 학습';
+    } else if (mode === 'random') {
+        quizHeader.textContent = '🎲 랜덤 테스트';
+    } else if (mode === 'wrong') {
+        quizHeader.textContent = '❌ 틀린 문제';
+    }
+
     showScreen('quizScreen');
     loadQuestion();
 }

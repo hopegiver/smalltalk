@@ -21,12 +21,15 @@
     <div class="container">
         <!-- Start Screen -->
         <div id="startScreen" class="screen active">
-            <div class="header">
+            <div class="app-header">
                 <h1>English SmallTalk</h1>
-                <p class="subtitle">매일 10분, 영어 스몰톡 마스터</p>
             </div>
+            <div class="screen-content">
+                <div class="header">
+                    <p class="subtitle">매일 10분, 영어 스몰톡 마스터</p>
+                </div>
 
-            <div class="quick-stats">
+                <div class="quick-stats">
                 <div class="quick-stat-item">
                     <div class="quick-stat-icon">🔥</div>
                     <div class="quick-stat-value" id="quickStreak">0</div>
@@ -70,13 +73,16 @@
                     <div class="menu-desc">분석</div>
                 </div>
             </div>
+            </div>
         </div>
 
         <!-- Statistics Screen -->
         <div id="statsScreen" class="screen">
-            <h1>📊 학습 통계</h1>
-
-            <div class="stats-detail">
+            <div class="app-header">
+                <h1>📊 학습 통계</h1>
+            </div>
+            <div class="screen-content">
+                <div class="stats-detail">
                 <div class="stat-card">
                     <div class="stat-card-icon">🔥</div>
                     <div class="stat-card-value" id="streakDays">0일</div>
@@ -120,11 +126,16 @@
             </div>
 
             <button class="btn" onclick="closeStatistics()">닫기</button>
+            </div>
         </div>
 
         <!-- Quiz Screen -->
         <div id="quizScreen" class="screen">
-            <div class="progress-bar">
+            <div class="app-header">
+                <h1 id="quizHeader">🎯 학습 중</h1>
+            </div>
+            <div class="screen-content">
+                <div class="progress-bar">
                 <div class="progress-fill" id="progressBar"></div>
             </div>
 
@@ -152,11 +163,16 @@
                 <button class="btn" id="confirmBtn" onclick="checkAnswer()">확인</button>
                 <button class="btn secondary" onclick="goHome()">처음으로</button>
             </div>
+            </div>
         </div>
 
         <!-- Answer Screen -->
         <div id="answerScreen" class="screen">
-            <div class="result-icon" id="resultIcon">✓</div>
+            <div class="app-header">
+                <h1>💡 정답 확인</h1>
+            </div>
+            <div class="screen-content">
+                <div class="result-icon" id="resultIcon">✓</div>
 
             <div class="correct-answer-box">
                 <div class="answer-label">정답</div>
@@ -174,13 +190,16 @@
                 <button class="btn" onclick="nextQuestion()">다음</button>
                 <button class="btn secondary" onclick="goHome()">처음으로</button>
             </div>
+            </div>
         </div>
 
         <!-- Result Screen -->
         <div id="resultScreen" class="screen">
-            <h1>🎉 테스트 완료!</h1>
-
-            <div class="stats">
+            <div class="app-header">
+                <h1>🎉 테스트 완료</h1>
+            </div>
+            <div class="screen-content">
+                <div class="stats">
                 <div class="stat-item">
                     <div class="stat-label">정답</div>
                     <div class="stat-value" id="finalCorrect">0</div>
@@ -198,6 +217,7 @@
             <div class="result-list" id="resultList"></div>
 
             <button class="btn" onclick="restartQuiz()">다시 시작</button>
+            </div>
         </div>
     </div>
 
