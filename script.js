@@ -551,11 +551,16 @@ function goHome() {
 }
 
 // Show screen
-function showScreen(screenId) {
+function showScreen(screenId, addToHistory = true) {
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+
+    // Add to browser history for back button support
+    if (addToHistory) {
+        history.pushState({ screen: screenId }, '', '');
+    }
 }
 
 // Show statistics
@@ -677,7 +682,28 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Handle browser back button
+window.addEventListener('popstate', (event) => {
+    // Stop recognition and timers when navigating back
+    shouldRestart = false;
+    if (recognition) {
+        try {
+            recognition.stop();
+        } catch (e) {}
+    }
+    if (autoNextTimer) {
+        clearInterval(autoNextTimer);
+        autoNextTimer = null;
+    }
+
+    // Go to the previous screen or start screen
+    const screenId = event.state?.screen || 'startScreen';
+    showScreen(screenId, false);
+});
+
 // Initialize on load
 window.addEventListener('load', async () => {
     await loadData();
+    // Set initial history state
+    history.replaceState({ screen: 'startScreen' }, '', '');
 });
