@@ -148,6 +148,10 @@
                     <div class="stat-label">정답</div>
                     <div class="stat-value" id="currentCorrect">0</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-label">총 테스트</div>
+                    <div class="stat-value" id="totalSessions">0회</div>
+                </div>
             </div>
 
             <div class="question-box" id="questionText">한글 문장이 여기에 표시됩니다</div>
@@ -158,6 +162,7 @@
             </div>
 
             <div class="transcript" id="transcript">터치하면 다시 녹음할 수 있어요</div>
+            <div class="random-instruction" id="randomInstruction" style="display: none; padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">확인 버튼을 눌러 정답을 확인하세요</div>
 
             <div class="btn-group">
                 <button class="btn" id="confirmBtn" onclick="checkAnswer()">확인</button>
@@ -172,7 +177,24 @@
                 <h1>💡 정답 확인</h1>
             </div>
             <div class="screen-content">
-                <div class="result-icon" id="resultIcon">✓</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="answerProgressBar"></div>
+                </div>
+
+                <div class="stats" id="answerStats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제</div>
+                        <div class="stat-value" id="answerCurrentQuestion">1/10</div>
+                    </div>
+                    <div class="stat-item" id="answerStatSecond">
+                        <div class="stat-label">정답</div>
+                        <div class="stat-value" id="answerCurrentCorrect">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">총 테스트</div>
+                        <div class="stat-value" id="answerTotalSessions">0회</div>
+                    </div>
+                </div>
 
             <div class="correct-answer-box">
                 <div class="answer-label">정답</div>
@@ -184,7 +206,7 @@
                 <div id="userAnswer" class="user-answer-text">Your answer here</div>
             </div>
 
-            <div class="timer" id="autoNextTimer"></div>
+            <div class="random-instruction" id="answerInstruction" style="display: none; padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">다음 버튼을 눌러 계속 진행하세요</div>
 
             <div class="btn-group">
                 <button class="btn" onclick="nextQuestion()">다음</button>
@@ -216,7 +238,10 @@
 
             <div class="result-list" id="resultList"></div>
 
-            <button class="btn" onclick="restartQuiz()">다시 시작</button>
+            <div class="btn-group">
+                <button class="btn" onclick="continueQuiz()">계속 진행하기</button>
+                <button class="btn secondary" onclick="goHome()">처음으로</button>
+            </div>
             </div>
         </div>
     </div>

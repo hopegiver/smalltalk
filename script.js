@@ -14,12 +14,24 @@ let isRecording = false;
 let shouldRestart = false;
 let recognitionTimeout = null;
 let hasSpeech = false;
+let totalTestSessions = 0; // Total number of test sessions completed
+let randomModeCompleteRounds = 0; // Number of complete rounds in random mode
+let randomModeProgress = []; // Track which sentences have been tested in current round
 
 // Load data from JSON file
 async function loadData() {
     try {
         const response = await fetch('data.json');
         sentences = await response.json();
+        
+        // Load total test sessions from localStorage
+        const savedSessions = localStorage.getItem('totalTestSessions');
+        totalTestSessions = savedSessions ? parseInt(savedSessions, 10) : 0;
+        
+        // Load random mode complete rounds
+        const savedRounds = localStorage.getItem('randomModeCompleteRounds');
+        randomModeCompleteRounds = savedRounds ? parseInt(savedRounds, 10) : 0;
+        
         updateStartScreenStats();
     } catch (error) {
         console.error('Failed to load data:', error);
@@ -348,9 +360,12 @@ function selectQuestions() {
 
 // Start quiz with specific mode
 function startQuiz(mode = 'smart') {
-    if (!initSpeechRecognition()) {
-        alert('음성 인식을 사용할 수 없습니다. Chrome 또는 Edge 브라우저를 사용하세요.');
-        return;
+    // For random mode, don't need speech recognition
+    if (mode !== 'random') {
+        if (!initSpeechRecognition()) {
+            alert('음성 인식을 사용할 수 없습니다. Chrome 또는 Edge 브라우저를 사용하세요.');
+            return;
+        }
     }
 
     quizMode = mode;
@@ -388,13 +403,32 @@ function loadQuestion() {
     const question = currentQuizSet[currentQuestionIndex];
     document.getElementById('questionText').textContent = question.ko;
     document.getElementById('currentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
-    document.getElementById('currentCorrect').textContent = correctCount;
+
+    // Update stats based on mode
+    updateQuizStats();
 
     // Update progress bar
     const progress = ((currentQuestionIndex) / currentQuizSet.length) * 100;
     document.getElementById('progressBar').style.width = progress + '%';
 
-    // Reset transcript and start recording
+    // For random mode, hide voice recognition UI completely
+    if (quizMode === 'random') {
+        document.getElementById('recordingIndicator').style.display = 'none';
+        document.getElementById('transcript').style.display = 'none';
+        document.getElementById('randomInstruction').style.display = 'block';
+
+        // Disable confirm button until shown
+        document.getElementById('confirmBtn').style.display = 'inline-block';
+        return;
+    }
+
+    // Show recording UI for other modes
+    document.getElementById('recordingIndicator').style.display = 'flex';
+    document.getElementById('transcript').style.display = 'block';
+    document.getElementById('randomInstruction').style.display = 'none';
+    document.getElementById('confirmBtn').style.display = 'inline-block';
+
+    // Reset transcript and start recording (for smart and wrong modes)
     currentTranscript = '';
     const transcriptEl = document.getElementById('transcript');
     transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
@@ -430,7 +464,34 @@ function startRecording() {
 
 // Check answer
 function checkAnswer() {
-    // Clear timeout if exists
+    const question = currentQuizSet[currentQuestionIndex];
+    
+    if (quizMode === 'random') {
+        // For random mode, just show the answer without scoring
+        // Update progress (just increment attempts)
+        const progress = loadProgress();
+        const progIndex = progress.findIndex(p => p.id === question.id);
+        if (progIndex !== -1) {
+            progress[progIndex].attempts++; // Increment attempts count
+            progress[progIndex].lastSeen = Date.now();
+            saveProgress(progress);
+        }
+
+        // Store result (no correct/incorrect for random mode)
+        quizResults.push({
+            question: question,
+            userAnswer: '',
+            correct: true // Always true for random mode since there's no wrong answer
+        });
+
+        // DON'T increment correctCount for random mode
+
+        // Show answer screen without correctness indication
+        showAnswerScreenForRandom(question);
+        return;
+    }
+
+    // Clear timeout if exists (for smart/wrong modes)
     if (recognitionTimeout) {
         clearTimeout(recognitionTimeout);
         recognitionTimeout = null;
@@ -444,7 +505,6 @@ function checkAnswer() {
         console.log('Recognition stop error');
     }
 
-    const question = currentQuizSet[currentQuestionIndex];
     const userAnswer = currentTranscript.toLowerCase().trim();
     const correctAnswer = question.en.toLowerCase().trim();
 
@@ -526,28 +586,157 @@ function getEditDistance(s1, s2) {
     return costs[s2.length];
 }
 
+// Show answer screen for random mode
+function showAnswerScreenForRandom(question) {
+    document.getElementById('correctAnswer').textContent = question.en;
+
+    // Update answer screen stats and progress bar
+    updateAnswerScreenStats();
+    updateAnswerProgressBar();
+
+    // Hide user answer section for random mode
+    const userAnswerBox = document.querySelector('.user-answer-box');
+    if (userAnswerBox) {
+        userAnswerBox.style.display = 'none';
+    }
+
+    // Show instruction for random mode
+    document.getElementById('answerInstruction').style.display = 'block';
+
+    showScreen('answerScreen');
+}
+
 // Show answer screen
 function showAnswerScreen(question, userAnswer, isCorrect) {
-    document.getElementById('resultIcon').textContent = isCorrect ? '✓' : '✗';
-    document.getElementById('resultIcon').className = 'result-icon ' + (isCorrect ? 'correct' : 'incorrect');
     document.getElementById('correctAnswer').textContent = question.en;
     document.getElementById('userAnswer').textContent = userAnswer || '(답변 없음)';
 
-    showScreen('answerScreen');
+    // Update answer screen stats and progress bar
+    updateAnswerScreenStats();
+    updateAnswerProgressBar();
 
-    // Auto next after 5 seconds
-    let countdown = 5;
-    document.getElementById('autoNextTimer').textContent = `${countdown}초 후 자동으로 넘어갑니다...`;
+    // Show user answer section for non-random modes
+    const userAnswerBox = document.querySelector('.user-answer-box');
+    if (userAnswerBox) {
+        userAnswerBox.style.display = 'block';
+    }
 
-    autoNextTimer = setInterval(() => {
-        countdown--;
-        if (countdown > 0) {
-            document.getElementById('autoNextTimer').textContent = `${countdown}초 후 자동으로 넘어갑니다...`;
+    // Hide instruction for non-random modes
+    document.getElementById('answerInstruction').style.display = 'none';
+
+    // Update correct answer box styling based on result
+    const correctAnswerBox = document.querySelector('.correct-answer-box');
+    if (correctAnswerBox) {
+        if (isCorrect) {
+            correctAnswerBox.style.backgroundColor = '#d4edda';
+            correctAnswerBox.style.borderColor = '#28a745';
         } else {
-            clearInterval(autoNextTimer);
-            nextQuestion();
+            correctAnswerBox.style.backgroundColor = '#f8d7da';
+            correctAnswerBox.style.borderColor = '#dc3545';
         }
-    }, 1000);
+    }
+
+    showScreen('answerScreen');
+}
+
+// Get random mode tested count
+function getRandomModeTestedCount() {
+    const progress = loadProgress();
+    return progress.filter(p => p.attempts > 0).length;
+}
+
+// Get random mode remaining count
+function getRandomModeRemainingCount() {
+    const testedCount = getRandomModeTestedCount();
+    return sentences.length - testedCount;
+}
+
+// Update quiz stats
+function updateQuizStats() {
+    if (quizMode === 'random') {
+        // For random mode, show remaining count and complete rounds
+        const remainingCount = getRandomModeRemainingCount();
+
+        document.getElementById('currentCorrect').textContent = `${remainingCount}개`;
+        document.getElementById('totalSessions').textContent = `${randomModeCompleteRounds}라운드`;
+
+        // Update stat labels for random mode
+        const statSecond = document.querySelectorAll('.stat-item')[1];
+        if (statSecond) {
+            const label = statSecond.querySelector('.stat-label');
+            if (label) label.textContent = '남은 문제';
+        }
+
+        const statThird = document.querySelectorAll('.stat-item')[2];
+        if (statThird) {
+            const label = statThird.querySelector('.stat-label');
+            if (label) label.textContent = '완성 라운드';
+        }
+    } else {
+        // For other modes, show correct answers and total tests
+        document.getElementById('currentCorrect').textContent = correctCount;
+        document.getElementById('totalSessions').textContent = `${totalTestSessions}회`;
+
+        // Reset stat labels
+        const statSecond = document.querySelectorAll('.stat-item')[1];
+        if (statSecond) {
+            const label = statSecond.querySelector('.stat-label');
+            if (label) label.textContent = '정답';
+        }
+
+        const statThird = document.querySelectorAll('.stat-item')[2];
+        if (statThird) {
+            const label = statThird.querySelector('.stat-label');
+            if (label) label.textContent = '총 테스트';
+        }
+    }
+}
+
+// Update answer progress bar
+function updateAnswerProgressBar() {
+    const progress = ((currentQuestionIndex + 1) / currentQuizSet.length) * 100;
+    document.getElementById('answerProgressBar').style.width = progress + '%';
+}
+
+// Update answer screen stats
+function updateAnswerScreenStats() {
+    document.getElementById('answerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+
+    if (quizMode === 'random') {
+        // For random mode, show remaining count and complete rounds
+        const remainingCount = getRandomModeRemainingCount();
+
+        document.getElementById('answerCurrentCorrect').textContent = `${remainingCount}개`;
+        document.getElementById('answerTotalSessions').textContent = `${randomModeCompleteRounds}라운드`;
+
+        // Update stat labels for random mode
+        const answerStatSecond = document.getElementById('answerStatSecond');
+        if (answerStatSecond) {
+            const label = answerStatSecond.querySelector('.stat-label');
+            if (label) label.textContent = '남은 문제';
+        }
+
+        const answerTotalLabel = document.querySelector('#answerTotalSessions').previousElementSibling;
+        if (answerTotalLabel) {
+            answerTotalLabel.textContent = '완성 라운드';
+        }
+    } else {
+        // For other modes, show correct answers and total tests
+        document.getElementById('answerCurrentCorrect').textContent = correctCount;
+        document.getElementById('answerTotalSessions').textContent = `${totalTestSessions}회`;
+
+        // Reset stat labels for non-random modes
+        const answerStatSecond = document.getElementById('answerStatSecond');
+        if (answerStatSecond) {
+            const label = answerStatSecond.querySelector('.stat-label');
+            if (label) label.textContent = '정답';
+        }
+
+        const answerTotalLabel = document.querySelector('#answerTotalSessions').previousElementSibling;
+        if (answerTotalLabel) {
+            answerTotalLabel.textContent = '총 테스트';
+        }
+    }
 }
 
 // Next question
@@ -574,45 +763,153 @@ function showResults() {
         console.log('Recognition already stopped');
     }
 
-    const wrongCount = quizResults.filter(r => !r.correct).length;
-    const score = Math.round((correctCount / quizResults.length) * 100);
+    // Increment total test sessions
+    totalTestSessions++;
+    localStorage.setItem('totalTestSessions', totalTestSessions.toString());
 
-    document.getElementById('finalCorrect').textContent = correctCount;
-    document.getElementById('finalWrong').textContent = wrongCount;
-    document.getElementById('finalScore').textContent = score + '%';
+    // Check if random mode completed a full round
+    if (quizMode === 'random') {
+        const testedCount = getRandomModeTestedCount();
+        if (testedCount >= sentences.length) {
+            randomModeCompleteRounds++;
+            localStorage.setItem('randomModeCompleteRounds', randomModeCompleteRounds.toString());
+        }
+    }
 
-    // Build result list
-    const resultList = document.getElementById('resultList');
-    resultList.innerHTML = '<h2 style="margin-bottom: 15px;">상세 결과</h2>';
+    if (quizMode === 'random') {
+        // For random mode, hide scoring stats and show progress
+        const remainingCount = getRandomModeRemainingCount();
 
-    quizResults.forEach((result, index) => {
-        const item = document.createElement('div');
-        item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
+        document.getElementById('finalCorrect').textContent = `${remainingCount}개`;
+        document.getElementById('finalWrong').textContent = `${randomModeCompleteRounds}라운드`;
+        document.getElementById('finalScore').textContent = `${quizResults.length}개`;
 
-        let html = `
-            <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '✓' : '✗'}</div>
-            <div class="korean">${result.question.ko}</div>
-            <div class="english">정답: ${result.question.en}</div>
-        `;
+        // Update stat labels for random mode
+        const statItems = document.querySelectorAll('#resultScreen .stat-item');
+        if (statItems.length >= 3) {
+            const labels = statItems[0].querySelector('.stat-label');
+            if (labels) labels.textContent = '남은 문제';
 
-        if (!result.correct) {
-            html += `<div class="your-answer">당신의 답변: ${result.userAnswer || '(답변 없음)'}</div>`;
+            const labelsWrong = statItems[1].querySelector('.stat-label');
+            if (labelsWrong) labelsWrong.textContent = '완성 라운드';
+
+            const labelsScore = statItems[2].querySelector('.stat-label');
+            if (labelsScore) labelsScore.textContent = '이번 세트';
         }
 
-        item.innerHTML = html;
-        resultList.appendChild(item);
-    });
+        // Build result list for random mode - no correct/wrong indication
+        const resultList = document.getElementById('resultList');
+        resultList.innerHTML = '<h2 style="margin-bottom: 15px;">학습한 표현</h2>';
+
+        quizResults.forEach((result, index) => {
+            const item = document.createElement('div');
+            item.className = 'result-item correct'; // Always show as neutral
+
+            let html = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}.</div>
+                <div class="korean">${result.question.ko}</div>
+                <div class="english">${result.question.en}</div>
+            `;
+
+            item.innerHTML = html;
+            resultList.appendChild(item);
+        });
+    } else {
+        // For other modes, show normal scoring
+        const wrongCount = quizResults.filter(r => !r.correct).length;
+        const score = Math.round((correctCount / quizResults.length) * 100);
+
+        document.getElementById('finalCorrect').textContent = correctCount;
+        document.getElementById('finalWrong').textContent = wrongCount;
+        document.getElementById('finalScore').textContent = score + '%';
+
+        // Reset stat labels for non-random modes
+        const statItems = document.querySelectorAll('#resultScreen .stat-item');
+        if (statItems.length >= 3) {
+            const labels = statItems[0].querySelector('.stat-label');
+            if (labels) labels.textContent = '정답';
+
+            const labelsWrong = statItems[1].querySelector('.stat-label');
+            if (labelsWrong) labelsWrong.textContent = '오답';
+
+            const labelsScore = statItems[2].querySelector('.stat-label');
+            if (labelsScore) labelsScore.textContent = '점수';
+        }
+
+        // Build result list
+        const resultList = document.getElementById('resultList');
+        resultList.innerHTML = '<h2 style="margin-bottom: 15px;">상세 결과</h2>';
+
+        quizResults.forEach((result, index) => {
+            const item = document.createElement('div');
+            item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
+
+            let html = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '✓' : '✗'}</div>
+                <div class="korean">${result.question.ko}</div>
+                <div class="english">정답: ${result.question.en}</div>
+            `;
+
+            if (!result.correct) {
+                html += `<div class="your-answer">당신의 답변: ${result.userAnswer || '(답변 없음)'}</div>`;
+            }
+
+            item.innerHTML = html;
+            resultList.appendChild(item);
+        });
+    }
 
     showScreen('resultScreen');
     updateStartScreenStats();
 }
 
+// Continue with next 10 questions
+function continueQuiz() {
+    // Select next 10 questions
+    currentQuizSet = selectQuestions();
+    
+    if (currentQuizSet.length === 0) {
+        alert('더 이상 진행할 문제가 없습니다.');
+        showScreen('startScreen');
+        return;
+    }
+
+    currentQuestionIndex = 0;
+    correctCount = 0;
+    quizResults = [];
+
+    showScreen('quizScreen');
+    loadQuestion();
+}
+
 // Restart quiz
 function restartQuiz() {
+    // Clear recognition timeout
+    if (recognitionTimeout) {
+        clearTimeout(recognitionTimeout);
+        recognitionTimeout = null;
+    }
+
+    // Disable auto-restart and stop recognition
+    shouldRestart = false;
+    try {
+        if (recognition) {
+            recognition.stop();
+        }
+    } catch (e) {
+        console.log('Recognition stop error');
+    }
+
+    // Clear auto-next timer
+    if (autoNextTimer) {
+        clearInterval(autoNextTimer);
+        autoNextTimer = null;
+    }
+
     showScreen('startScreen');
 }
 
-// Go back to home (cancel current quiz)
+// Go back to home (cancel current quiz or from result screen)
 function goHome() {
     // Clear recognition timeout
     if (recognitionTimeout) {
@@ -636,7 +933,17 @@ function goHome() {
         autoNextTimer = null;
     }
 
-    // Confirm before leaving if quiz is in progress
+    // Check if we're on the result screen
+    const resultScreen = document.getElementById('resultScreen');
+    const isResultScreen = resultScreen && resultScreen.classList.contains('active');
+
+    // If on result screen, go home without confirmation
+    if (isResultScreen) {
+        showScreen('startScreen');
+        return;
+    }
+
+    // Otherwise, confirm before leaving if quiz is in progress
     if (confirm('진행 중인 테스트를 종료하시겠습니까?')) {
         showScreen('startScreen');
     }
@@ -768,21 +1075,21 @@ if ('serviceWorker' in navigator) {
                 // Check for updates when app loads
                 registration.update();
 
-                // Handle updates
+                // Check for updates every 60 seconds
+                setInterval(() => {
+                    registration.update();
+                }, 60000);
+
+                // Handle updates - automatically update without confirmation
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     console.log('[App] New service worker found, installing...');
 
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New service worker is ready
-                            console.log('[App] New version available!');
-
-                            // Show update notification
-                            if (confirm('새로운 버전이 있습니다. 지금 업데이트하시겠습니까?')) {
-                                newWorker.postMessage({ action: 'skipWaiting' });
-                                window.location.reload();
-                            }
+                            // New service worker is ready - auto update
+                            console.log('[App] New version available! Auto-updating...');
+                            newWorker.postMessage({ action: 'skipWaiting' });
                         }
                     });
                 });
