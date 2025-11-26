@@ -1075,21 +1075,19 @@ if ('serviceWorker' in navigator) {
                 // Check for updates when app loads
                 registration.update();
 
-                // Check for updates every 60 seconds
-                setInterval(() => {
-                    registration.update();
-                }, 60000);
-
-                // Handle updates - automatically update without confirmation
+                // Handle updates - show confirmation dialog
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     console.log('[App] New service worker found, installing...');
 
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New service worker is ready - auto update
-                            console.log('[App] New version available! Auto-updating...');
-                            newWorker.postMessage({ action: 'skipWaiting' });
+                            // New service worker is ready - ask user
+                            console.log('[App] New version available!');
+
+                            if (confirm('새로운 버전이 있습니다. 지금 업데이트하시겠습니까?')) {
+                                newWorker.postMessage({ action: 'skipWaiting' });
+                            }
                         }
                     });
                 });
