@@ -129,89 +129,244 @@
             </div>
         </div>
 
-        <!-- Quiz Screen -->
-        <div id="quizScreen" class="screen">
+        <!-- Smart Quiz Screen -->
+        <div id="smartQuizScreen" class="screen">
             <div class="app-header">
-                <h1 id="quizHeader">🎯 학습 중</h1>
+                <h1>🎯 스마트 학습</h1>
             </div>
             <div class="screen-content">
                 <div class="progress-bar">
-                <div class="progress-fill" id="progressBar"></div>
-            </div>
-
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-label">문제</div>
-                    <div class="stat-value" id="currentQuestion">1/10</div>
+                    <div class="progress-fill" id="smartProgressBar"></div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">정답</div>
-                    <div class="stat-value" id="currentCorrect">0</div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제</div>
+                        <div class="stat-value" id="smartCurrentQuestion">1/10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답</div>
+                        <div class="stat-value" id="smartCorrect">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">총 테스트</div>
+                        <div class="stat-value" id="smartTotalSessions">0회</div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">총 테스트</div>
-                    <div class="stat-value" id="totalSessions">0회</div>
+
+                <div class="question-box" id="smartQuestionText">한글 문장이 여기에 표시됩니다</div>
+
+                <div class="recording-indicator" id="smartRecordingIndicator">
+                    <div class="recording-dot"></div>
+                    <span>녹음 중... 영어로 말해보세요</span>
                 </div>
-            </div>
 
-            <div class="question-box" id="questionText">한글 문장이 여기에 표시됩니다</div>
+                <div class="transcript" id="smartTranscript">터치하면 다시 녹음할 수 있어요</div>
 
-            <div class="recording-indicator" id="recordingIndicator">
-                <div class="recording-dot"></div>
-                <span>녹음 중... 영어로 말해보세요</span>
-            </div>
-
-            <div class="transcript" id="transcript">터치하면 다시 녹음할 수 있어요</div>
-            <div class="random-instruction" id="randomInstruction" style="display: none; padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">확인 버튼을 눌러 정답을 확인하세요</div>
-
-            <div class="btn-group">
-                <button class="btn" id="confirmBtn" onclick="checkAnswer()">확인</button>
-                <button class="btn secondary" onclick="goHome()">처음으로</button>
-            </div>
+                <div class="btn-group">
+                    <button class="btn" onclick="checkAnswer()">확인</button>
+                    <button class="btn secondary" onclick="goHome()">처음으로</button>
+                </div>
             </div>
         </div>
 
-        <!-- Answer Screen -->
-        <div id="answerScreen" class="screen">
+        <!-- Random Quiz Screen -->
+        <div id="randomQuizScreen" class="screen">
+            <div class="app-header">
+                <h1>🎲 랜덤 테스트</h1>
+            </div>
+            <div class="screen-content">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="randomProgressBar"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제</div>
+                        <div class="stat-value" id="randomCurrentQuestion">1/10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">남은 문제</div>
+                        <div class="stat-value" id="randomRemaining">200개</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">완성 라운드</div>
+                        <div class="stat-value" id="randomRounds">0라운드</div>
+                    </div>
+                </div>
+
+                <div class="question-box" id="randomQuestionText">한글 문장이 여기에 표시됩니다</div>
+
+                <div class="random-instruction" style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">확인 버튼을 눌러 정답을 확인하세요</div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="checkAnswer()">확인</button>
+                    <button class="btn secondary" onclick="goHome()">처음으로</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wrong Quiz Screen -->
+        <div id="wrongQuizScreen" class="screen">
+            <div class="app-header">
+                <h1>❌ 틀린 문제</h1>
+            </div>
+            <div class="screen-content">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="wrongProgressBar"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제</div>
+                        <div class="stat-value" id="wrongCurrentQuestion">1/10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답</div>
+                        <div class="stat-value" id="wrongCorrect">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">총 테스트</div>
+                        <div class="stat-value" id="wrongTotalSessions">0회</div>
+                    </div>
+                </div>
+
+                <div class="question-box" id="wrongQuestionText">한글 문장이 여기에 표시됩니다</div>
+
+                <div class="recording-indicator" id="wrongRecordingIndicator">
+                    <div class="recording-dot"></div>
+                    <span>녹음 중... 영어로 말해보세요</span>
+                </div>
+
+                <div class="transcript" id="wrongTranscript">터치하면 다시 녹음할 수 있어요</div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="checkAnswer()">확인</button>
+                    <button class="btn secondary" onclick="goHome()">처음으로</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Answer Screen -->
+        <div id="smartAnswerScreen" class="screen">
             <div class="app-header">
                 <h1>💡 정답 확인</h1>
             </div>
             <div class="screen-content">
                 <div class="progress-bar">
-                    <div class="progress-fill" id="answerProgressBar"></div>
+                    <div class="progress-fill" id="smartAnswerProgressBar"></div>
                 </div>
 
-                <div class="stats" id="answerStats">
+                <div class="stats">
                     <div class="stat-item">
                         <div class="stat-label">문제</div>
-                        <div class="stat-value" id="answerCurrentQuestion">1/10</div>
+                        <div class="stat-value" id="smartAnswerCurrentQuestion">1/10</div>
                     </div>
-                    <div class="stat-item" id="answerStatSecond">
+                    <div class="stat-item">
                         <div class="stat-label">정답</div>
-                        <div class="stat-value" id="answerCurrentCorrect">0</div>
+                        <div class="stat-value" id="smartAnswerCorrect">0</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">총 테스트</div>
-                        <div class="stat-value" id="answerTotalSessions">0회</div>
+                        <div class="stat-value" id="smartAnswerTotalSessions">0회</div>
                     </div>
                 </div>
 
-            <div class="correct-answer-box">
-                <div class="answer-label">정답</div>
-                <div id="correctAnswer" class="correct-answer-text">Correct answer here</div>
-            </div>
+                <div class="correct-answer-box" id="smartCorrectAnswerBox">
+                    <div class="answer-label">정답</div>
+                    <div id="smartCorrectAnswer" class="correct-answer-text">Correct answer here</div>
+                </div>
 
-            <div class="user-answer-box">
-                <div class="answer-label-small">당신의 답변</div>
-                <div id="userAnswer" class="user-answer-text">Your answer here</div>
-            </div>
+                <div class="user-answer-box">
+                    <div class="answer-label-small">당신의 답변</div>
+                    <div id="smartUserAnswer" class="user-answer-text">Your answer here</div>
+                </div>
 
-            <div class="random-instruction" id="answerInstruction" style="display: none; padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">다음 버튼을 눌러 계속 진행하세요</div>
-
-            <div class="btn-group">
-                <button class="btn" onclick="nextQuestion()">다음</button>
-                <button class="btn secondary" onclick="goHome()">처음으로</button>
+                <div class="btn-group">
+                    <button class="btn" onclick="nextQuestion()">다음</button>
+                    <button class="btn secondary" onclick="goHome()">처음으로</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Random Answer Screen -->
+        <div id="randomAnswerScreen" class="screen">
+            <div class="app-header">
+                <h1>🎲 랜덤 테스트</h1>
+            </div>
+            <div class="screen-content">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="randomAnswerProgressBar"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제</div>
+                        <div class="stat-value" id="randomAnswerCurrentQuestion">1/10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">남은 문제</div>
+                        <div class="stat-value" id="randomAnswerRemaining">200개</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">완성 라운드</div>
+                        <div class="stat-value" id="randomAnswerRounds">0라운드</div>
+                    </div>
+                </div>
+
+                <div class="correct-answer-box">
+                    <div class="answer-label">정답</div>
+                    <div id="randomCorrectAnswer" class="correct-answer-text">Correct answer here</div>
+                </div>
+
+                <div class="random-instruction" style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">다음 버튼을 눌러 계속 진행하세요</div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextQuestion()">다음</button>
+                    <button class="btn secondary" onclick="goHome()">처음으로</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wrong Answer Screen -->
+        <div id="wrongAnswerScreen" class="screen">
+            <div class="app-header">
+                <h1>💡 정답 확인</h1>
+            </div>
+            <div class="screen-content">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="wrongAnswerProgressBar"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">문제</div>
+                        <div class="stat-value" id="wrongAnswerCurrentQuestion">1/10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답</div>
+                        <div class="stat-value" id="wrongAnswerCorrect">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">총 테스트</div>
+                        <div class="stat-value" id="wrongAnswerTotalSessions">0회</div>
+                    </div>
+                </div>
+
+                <div class="correct-answer-box" id="wrongCorrectAnswerBox">
+                    <div class="answer-label">정답</div>
+                    <div id="wrongCorrectAnswer" class="correct-answer-text">Correct answer here</div>
+                </div>
+
+                <div class="user-answer-box">
+                    <div class="answer-label-small">당신의 답변</div>
+                    <div id="wrongUserAnswer" class="user-answer-text">Your answer here</div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextQuestion()">다음</button>
+                    <button class="btn secondary" onclick="goHome()">처음으로</button>
+                </div>
             </div>
         </div>
 

@@ -88,7 +88,14 @@ function initSpeechRecognition() {
         }
 
         currentTranscript = (finalTranscript + interimTranscript).trim();
-        document.getElementById('transcript').textContent = currentTranscript || '당신의 답변이 여기에 표시됩니다...';
+
+        // Update transcript for current mode
+        const transcriptText = currentTranscript || '당신의 답변이 여기에 표시됩니다...';
+        if (quizMode === 'smart') {
+            document.getElementById('smartTranscript').textContent = transcriptText;
+        } else if (quizMode === 'wrong') {
+            document.getElementById('wrongTranscript').textContent = transcriptText;
+        }
 
         // If we have speech, cancel the timeout (keep recording, just don't auto-submit)
         if (hasSpeech) {
@@ -374,20 +381,14 @@ function startQuiz(mode = 'smart') {
     correctCount = 0;
     quizResults = [];
 
-    // Update quiz header based on mode
-    const quizHeader = document.getElementById('quizHeader');
+    // Show appropriate screen based on mode
     if (mode === 'smart') {
-        quizHeader.textContent = '🎯 스마트 학습';
+        showScreen('smartQuizScreen');
     } else if (mode === 'random') {
-        quizHeader.textContent = '🎲 랜덤 테스트';
+        showScreen('randomQuizScreen');
     } else if (mode === 'wrong') {
-        quizHeader.textContent = '❌ 틀린 문제';
+        showScreen('wrongQuizScreen');
     }
-
-    showScreen('quizScreen');
-
-    // Pre-update stats before loading first question to avoid showing default labels
-    updateQuizStats();
 
     loadQuestion();
 }
@@ -400,57 +401,74 @@ function loadQuestion() {
     }
 
     const question = currentQuizSet[currentQuestionIndex];
-    document.getElementById('questionText').textContent = question.ko;
-    document.getElementById('currentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
-
-    // Update stats based on mode
-    updateQuizStats();
-
-    // Update progress bar
     const progress = ((currentQuestionIndex) / currentQuizSet.length) * 100;
-    document.getElementById('progressBar').style.width = progress + '%';
 
-    // For random mode, hide voice recognition UI completely
-    if (quizMode === 'random') {
-        document.getElementById('recordingIndicator').style.display = 'none';
-        document.getElementById('transcript').style.display = 'none';
-        document.getElementById('randomInstruction').style.display = 'block';
+    if (quizMode === 'smart') {
+        document.getElementById('smartQuestionText').textContent = question.ko;
+        document.getElementById('smartCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+        document.getElementById('smartCorrect').textContent = correctCount;
+        document.getElementById('smartTotalSessions').textContent = `${totalTestSessions}회`;
+        document.getElementById('smartProgressBar').style.width = progress + '%';
 
-        // Disable confirm button until shown
-        document.getElementById('confirmBtn').style.display = 'inline-block';
-        return;
-    }
+        // Reset transcript and start recording
+        currentTranscript = '';
+        const transcriptEl = document.getElementById('smartTranscript');
+        transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
+        transcriptEl.onclick = () => {
+            if (!isRecording) {
+                startRecording();
+            }
+        };
+        transcriptEl.style.cursor = 'pointer';
 
-    // Show recording UI for other modes
-    document.getElementById('recordingIndicator').style.display = 'flex';
-    document.getElementById('transcript').style.display = 'block';
-    document.getElementById('randomInstruction').style.display = 'none';
-    document.getElementById('confirmBtn').style.display = 'inline-block';
-
-    // Reset transcript and start recording (for smart and wrong modes)
-    currentTranscript = '';
-    const transcriptEl = document.getElementById('transcript');
-    transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
-
-    // Add click handler for re-recording
-    transcriptEl.onclick = () => {
-        if (!isRecording) {
+        setTimeout(() => {
             startRecording();
-        }
-    };
-    transcriptEl.style.cursor = 'pointer';
+        }, 500);
 
-    // Start recording after a short delay
-    setTimeout(() => {
-        startRecording();
-    }, 500);
+    } else if (quizMode === 'random') {
+        const remainingCount = getRandomModeRemainingCount();
+
+        document.getElementById('randomQuestionText').textContent = question.ko;
+        document.getElementById('randomCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+        document.getElementById('randomRemaining').textContent = `${remainingCount}개`;
+        document.getElementById('randomRounds').textContent = `${randomModeCompleteRounds}라운드`;
+        document.getElementById('randomProgressBar').style.width = progress + '%';
+
+    } else if (quizMode === 'wrong') {
+        document.getElementById('wrongQuestionText').textContent = question.ko;
+        document.getElementById('wrongCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+        document.getElementById('wrongCorrect').textContent = correctCount;
+        document.getElementById('wrongTotalSessions').textContent = `${totalTestSessions}회`;
+        document.getElementById('wrongProgressBar').style.width = progress + '%';
+
+        // Reset transcript and start recording
+        currentTranscript = '';
+        const transcriptEl = document.getElementById('wrongTranscript');
+        transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
+        transcriptEl.onclick = () => {
+            if (!isRecording) {
+                startRecording();
+            }
+        };
+        transcriptEl.style.cursor = 'pointer';
+
+        setTimeout(() => {
+            startRecording();
+        }, 500);
+    }
 }
 
 // Start recording with 10 second timeout
 function startRecording() {
     currentTranscript = '';
     hasSpeech = false;
-    document.getElementById('transcript').textContent = '녹음 중... 영어로 말해보세요';
+
+    // Update transcript for current mode
+    if (quizMode === 'smart') {
+        document.getElementById('smartTranscript').textContent = '녹음 중... 영어로 말해보세요';
+    } else if (quizMode === 'wrong') {
+        document.getElementById('wrongTranscript').textContent = '녹음 중... 영어로 말해보세요';
+    }
 
     try {
         if (!isRecording) {
@@ -587,55 +605,66 @@ function getEditDistance(s1, s2) {
 
 // Show answer screen for random mode
 function showAnswerScreenForRandom(question) {
-    document.getElementById('correctAnswer').textContent = question.en;
+    const remainingCount = getRandomModeRemainingCount();
+    const answerProgress = ((currentQuestionIndex + 1) / currentQuizSet.length) * 100;
 
-    // Update answer screen stats and progress bar
-    updateAnswerScreenStats();
-    updateAnswerProgressBar();
+    document.getElementById('randomCorrectAnswer').textContent = question.en;
+    document.getElementById('randomAnswerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+    document.getElementById('randomAnswerRemaining').textContent = `${remainingCount}개`;
+    document.getElementById('randomAnswerRounds').textContent = `${randomModeCompleteRounds}라운드`;
+    document.getElementById('randomAnswerProgressBar').style.width = answerProgress + '%';
 
-    // Hide user answer section for random mode
-    const userAnswerBox = document.querySelector('.user-answer-box');
-    if (userAnswerBox) {
-        userAnswerBox.style.display = 'none';
-    }
-
-    // Show instruction for random mode
-    document.getElementById('answerInstruction').style.display = 'block';
-
-    showScreen('answerScreen');
+    showScreen('randomAnswerScreen');
 }
 
 // Show answer screen
 function showAnswerScreen(question, userAnswer, isCorrect) {
-    document.getElementById('correctAnswer').textContent = question.en;
-    document.getElementById('userAnswer').textContent = userAnswer || '(답변 없음)';
+    const answerProgress = ((currentQuestionIndex + 1) / currentQuizSet.length) * 100;
 
-    // Update answer screen stats and progress bar
-    updateAnswerScreenStats();
-    updateAnswerProgressBar();
+    if (quizMode === 'smart') {
+        document.getElementById('smartCorrectAnswer').textContent = question.en;
+        document.getElementById('smartUserAnswer').textContent = userAnswer || '(답변 없음)';
+        document.getElementById('smartAnswerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+        document.getElementById('smartAnswerCorrect').textContent = correctCount;
+        document.getElementById('smartAnswerTotalSessions').textContent = `${totalTestSessions}회`;
+        document.getElementById('smartAnswerProgressBar').style.width = answerProgress + '%';
 
-    // Show user answer section for non-random modes
-    const userAnswerBox = document.querySelector('.user-answer-box');
-    if (userAnswerBox) {
-        userAnswerBox.style.display = 'block';
-    }
-
-    // Hide instruction for non-random modes
-    document.getElementById('answerInstruction').style.display = 'none';
-
-    // Update correct answer box styling based on result
-    const correctAnswerBox = document.querySelector('.correct-answer-box');
-    if (correctAnswerBox) {
-        if (isCorrect) {
-            correctAnswerBox.style.backgroundColor = '#d4edda';
-            correctAnswerBox.style.borderColor = '#28a745';
-        } else {
-            correctAnswerBox.style.backgroundColor = '#f8d7da';
-            correctAnswerBox.style.borderColor = '#dc3545';
+        // Update correct answer box styling based on result
+        const correctAnswerBox = document.getElementById('smartCorrectAnswerBox');
+        if (correctAnswerBox) {
+            if (isCorrect) {
+                correctAnswerBox.style.backgroundColor = '#d4edda';
+                correctAnswerBox.style.borderColor = '#28a745';
+            } else {
+                correctAnswerBox.style.backgroundColor = '#f8d7da';
+                correctAnswerBox.style.borderColor = '#dc3545';
+            }
         }
-    }
 
-    showScreen('answerScreen');
+        showScreen('smartAnswerScreen');
+
+    } else if (quizMode === 'wrong') {
+        document.getElementById('wrongCorrectAnswer').textContent = question.en;
+        document.getElementById('wrongUserAnswer').textContent = userAnswer || '(답변 없음)';
+        document.getElementById('wrongAnswerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+        document.getElementById('wrongAnswerCorrect').textContent = correctCount;
+        document.getElementById('wrongAnswerTotalSessions').textContent = `${totalTestSessions}회`;
+        document.getElementById('wrongAnswerProgressBar').style.width = answerProgress + '%';
+
+        // Update correct answer box styling based on result
+        const correctAnswerBox = document.getElementById('wrongCorrectAnswerBox');
+        if (correctAnswerBox) {
+            if (isCorrect) {
+                correctAnswerBox.style.backgroundColor = '#d4edda';
+                correctAnswerBox.style.borderColor = '#28a745';
+            } else {
+                correctAnswerBox.style.backgroundColor = '#f8d7da';
+                correctAnswerBox.style.borderColor = '#dc3545';
+            }
+        }
+
+        showScreen('wrongAnswerScreen');
+    }
 }
 
 // Get random mode tested count
@@ -650,94 +679,6 @@ function getRandomModeRemainingCount() {
     return sentences.length - testedCount;
 }
 
-// Update quiz stats
-function updateQuizStats() {
-    if (quizMode === 'random') {
-        // For random mode, show remaining count and complete rounds
-        const remainingCount = getRandomModeRemainingCount();
-
-        document.getElementById('currentCorrect').textContent = `${remainingCount}개`;
-        document.getElementById('totalSessions').textContent = `${randomModeCompleteRounds}라운드`;
-
-        // Update stat labels for random mode
-        const statSecond = document.querySelectorAll('.stat-item')[1];
-        if (statSecond) {
-            const label = statSecond.querySelector('.stat-label');
-            if (label) label.textContent = '남은 문제';
-        }
-
-        const statThird = document.querySelectorAll('.stat-item')[2];
-        if (statThird) {
-            const label = statThird.querySelector('.stat-label');
-            if (label) label.textContent = '완성 라운드';
-        }
-    } else {
-        // For other modes, show correct answers and total tests
-        document.getElementById('currentCorrect').textContent = correctCount;
-        document.getElementById('totalSessions').textContent = `${totalTestSessions}회`;
-
-        // Reset stat labels
-        const statSecond = document.querySelectorAll('.stat-item')[1];
-        if (statSecond) {
-            const label = statSecond.querySelector('.stat-label');
-            if (label) label.textContent = '정답';
-        }
-
-        const statThird = document.querySelectorAll('.stat-item')[2];
-        if (statThird) {
-            const label = statThird.querySelector('.stat-label');
-            if (label) label.textContent = '총 테스트';
-        }
-    }
-}
-
-// Update answer progress bar
-function updateAnswerProgressBar() {
-    const progress = ((currentQuestionIndex + 1) / currentQuizSet.length) * 100;
-    document.getElementById('answerProgressBar').style.width = progress + '%';
-}
-
-// Update answer screen stats
-function updateAnswerScreenStats() {
-    document.getElementById('answerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
-
-    if (quizMode === 'random') {
-        // For random mode, show remaining count and complete rounds
-        const remainingCount = getRandomModeRemainingCount();
-
-        document.getElementById('answerCurrentCorrect').textContent = `${remainingCount}개`;
-        document.getElementById('answerTotalSessions').textContent = `${randomModeCompleteRounds}라운드`;
-
-        // Update stat labels for random mode
-        const answerStatSecond = document.getElementById('answerStatSecond');
-        if (answerStatSecond) {
-            const label = answerStatSecond.querySelector('.stat-label');
-            if (label) label.textContent = '남은 문제';
-        }
-
-        const answerTotalLabel = document.querySelector('#answerTotalSessions').previousElementSibling;
-        if (answerTotalLabel) {
-            answerTotalLabel.textContent = '완성 라운드';
-        }
-    } else {
-        // For other modes, show correct answers and total tests
-        document.getElementById('answerCurrentCorrect').textContent = correctCount;
-        document.getElementById('answerTotalSessions').textContent = `${totalTestSessions}회`;
-
-        // Reset stat labels for non-random modes
-        const answerStatSecond = document.getElementById('answerStatSecond');
-        if (answerStatSecond) {
-            const label = answerStatSecond.querySelector('.stat-label');
-            if (label) label.textContent = '정답';
-        }
-
-        const answerTotalLabel = document.querySelector('#answerTotalSessions').previousElementSibling;
-        if (answerTotalLabel) {
-            answerTotalLabel.textContent = '총 테스트';
-        }
-    }
-}
-
 // Next question
 function nextQuestion() {
     if (autoNextTimer) {
@@ -746,7 +687,16 @@ function nextQuestion() {
     }
 
     currentQuestionIndex++;
-    showScreen('quizScreen');
+
+    // Show appropriate quiz screen based on mode
+    if (quizMode === 'smart') {
+        showScreen('smartQuizScreen');
+    } else if (quizMode === 'random') {
+        showScreen('randomQuizScreen');
+    } else if (quizMode === 'wrong') {
+        showScreen('wrongQuizScreen');
+    }
+
     loadQuestion();
 }
 
@@ -866,7 +816,7 @@ function showResults() {
 function continueQuiz() {
     // Select next 10 questions
     currentQuizSet = selectQuestions();
-    
+
     if (currentQuizSet.length === 0) {
         alert('더 이상 진행할 문제가 없습니다.');
         showScreen('startScreen');
@@ -877,7 +827,15 @@ function continueQuiz() {
     correctCount = 0;
     quizResults = [];
 
-    showScreen('quizScreen');
+    // Show appropriate quiz screen based on mode
+    if (quizMode === 'smart') {
+        showScreen('smartQuizScreen');
+    } else if (quizMode === 'random') {
+        showScreen('randomQuizScreen');
+    } else if (quizMode === 'wrong') {
+        showScreen('wrongQuizScreen');
+    }
+
     loadQuestion();
 }
 
