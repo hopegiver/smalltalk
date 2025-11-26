@@ -390,6 +390,10 @@ function startQuiz(mode = 'smart') {
     }
 
     showScreen('quizScreen');
+
+    // Pre-update stats before loading first question to avoid showing default labels
+    updateQuizStats();
+
     loadQuestion();
 }
 
