@@ -847,9 +847,9 @@ function showResults() {
             };
 
             let html = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
-                <div class="english" style="margin-bottom: 5px;">${result.question.en}</div>
-                <div class="korean">${result.question.ko}</div>
+                <div style="font-weight: bold; margin-bottom: 8px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
+                <div class="english" style="font-size: 1.1em; margin-bottom: 5px; color: #333;">${englishInKo}</div>
+                <div class="english" style="font-size: 1.1em; color: #555;">${result.question.en}</div>
             `;
 
             item.innerHTML = html;
@@ -895,9 +895,9 @@ function showResults() {
             };
 
             let html = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '✓' : '✗'}</div>
-                <div class="english" style="margin-bottom: 5px;">정답: ${result.question.en}</div>
-                <div class="korean">${result.question.ko}</div>
+                <div style="font-weight: bold; margin-bottom: 8px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
+                <div class="english" style="font-size: 1.1em; margin-bottom: 5px; color: #333;">${englishInKo}</div>
+                <div class="english" style="font-size: 1.1em; color: #555;">${result.question.en}</div>
             `;
 
             item.innerHTML = html;
