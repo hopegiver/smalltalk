@@ -837,12 +837,19 @@ function showResults() {
             const item = document.createElement('div');
             item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
             item.style.cursor = 'pointer';
-            item.onclick = () => speakEnglish(result.question.en);
+
+            // Extract English from ko field (A and B's parts)
+            const englishInKo = extractEnglishFromKorean(result.question.ko);
+            item.onclick = () => {
+                // Speak both A and B parts
+                const fullText = englishInKo + '. ' + result.question.en;
+                speakEnglish(fullText);
+            };
 
             let html = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
+                <div class="english" style="margin-bottom: 5px;">${result.question.en}</div>
                 <div class="korean">${result.question.ko}</div>
-                <div class="english">${result.question.en}</div>
             `;
 
             item.innerHTML = html;
@@ -878,12 +885,19 @@ function showResults() {
             const item = document.createElement('div');
             item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
             item.style.cursor = 'pointer';
-            item.onclick = () => speakEnglish(result.question.en);
+
+            // Extract English from ko field (A and B's parts)
+            const englishInKo = extractEnglishFromKorean(result.question.ko);
+            item.onclick = () => {
+                // Speak both A and B parts
+                const fullText = englishInKo + '. ' + result.question.en;
+                speakEnglish(fullText);
+            };
 
             let html = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '✓' : '✗'}</div>
+                <div class="english" style="margin-bottom: 5px;">정답: ${result.question.en}</div>
                 <div class="korean">${result.question.ko}</div>
-                <div class="english">정답: ${result.question.en}</div>
             `;
 
             item.innerHTML = html;
