@@ -836,6 +836,8 @@ function showResults() {
         quizResults.forEach((result, index) => {
             const item = document.createElement('div');
             item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
+            item.style.cursor = 'pointer';
+            item.onclick = () => speakEnglish(result.question.en);
 
             let html = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
@@ -875,6 +877,8 @@ function showResults() {
         quizResults.forEach((result, index) => {
             const item = document.createElement('div');
             item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
+            item.style.cursor = 'pointer';
+            item.onclick = () => speakEnglish(result.question.en);
 
             let html = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '✓' : '✗'}</div>
