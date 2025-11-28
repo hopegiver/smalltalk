@@ -319,7 +319,7 @@ function selectQuestions() {
     }
 
     if (quizMode === 'random') {
-        // Random mode - show each sentence exactly once per round
+        // Random mode - show only sentences with attempts = 0
         const withAttempts = sentences.map(sentence => {
             const prog = progress.find(p => p.id === sentence.id) || {
                 attempts: 0
@@ -327,14 +327,26 @@ function selectQuestions() {
             return { ...sentence, attempts: prog.attempts };
         });
 
-        // Find the minimum attempts count across all sentences
-        const minAttempts = Math.min(...withAttempts.map(s => s.attempts));
+        // Get only untested sentences (attempts = 0)
+        let candidates = withAttempts.filter(s => s.attempts === 0);
 
-        // Only show sentences with minimum attempts (ensures each sentence shown once before repeating)
-        const candidates = withAttempts.filter(s => s.attempts === minAttempts);
+        // If all sentences have been tested (no attempts = 0), reset all to 0
+        if (candidates.length === 0) {
+            // Reset all attempts to 0 and increment round counter
+            sentences.forEach(sentence => {
+                const prog = progress.find(p => p.id === sentence.id);
+                if (prog) {
+                    prog.attempts = 0;
+                }
+            });
+            saveProgress(progress);
 
-        // If we've completed a full round (all sentences have same attempts count),
-        // this will naturally include all sentences for the next round
+            // Increment complete rounds counter
+            randomModeCompleteRounds++;
+
+            // All sentences are now candidates again
+            candidates = withAttempts.map(s => ({ ...s, attempts: 0 }));
+        }
 
         return shuffleArray(candidates).slice(0, Math.min(10, candidates.length));
     }
