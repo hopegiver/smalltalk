@@ -21,6 +21,7 @@ let randomModeProgress = []; // Track which sentences have been tested in curren
 // TTS (Text-to-Speech)
 let speechSynthesis = window.speechSynthesis;
 let currentUtterance = null;
+let lastSpokenText = ''; // Store last spoken text for replay
 
 // Function to extract English from Korean dialogue box (A or B's response)
 function extractEnglishFromKorean(koText) {
@@ -49,12 +50,22 @@ function speakEnglish(text) {
     // Remove HTML tags and A:, B: prefixes if present
     let cleanText = text.replace(/<br\s*\/?>/gi, ' ').replace(/^[AB]:\s*/gi, '').trim();
 
+    // Store for replay
+    lastSpokenText = cleanText;
+
     // Create new utterance
     currentUtterance = new SpeechSynthesisUtterance(cleanText);
     currentUtterance.lang = 'en-US';
     currentUtterance.rate = 0.9; // Slightly slower for learning
 
     speechSynthesis.speak(currentUtterance);
+}
+
+// Function to replay last spoken text
+function replayTTS() {
+    if (lastSpokenText) {
+        speakEnglish(lastSpokenText);
+    }
 }
 
 // Function to stop TTS
