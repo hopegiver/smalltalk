@@ -156,7 +156,7 @@
     {"id": "155", "ko": "A: Thanks for helping me out.<br>B: 문제없어요.", "en": "No problem."},
     {"id": "156", "ko": "A: Thank you so much for everything!<br>B: 천만에요.", "en": "Don't mention it."},
     {"id": "157", "ko": "A: I really appreciate your help.<br>B: 아무것도 아니에요.", "en": "It's nothing."},
-    {"id": "158", "ko": "A: How much do I owe you?<br>B: 제 차례예요.", "en": "It's on me."},
+    {"id": "158", "ko": "A: Let me pay for this.<br>B: 제 차례예요.", "en": "It's on me."},
     {"id": "159", "ko": "A: Can I pay you back?<br>B: 제가 살게요.", "en": "My treat."},
     {"id": "160", "ko": "A: You paid last time.<br>B: 다음엔 제가 살게요.", "en": "I'll get the next one."},
     {"id": "161", "ko": "A: Should we split the bill?<br>B: 각자 내요.", "en": "Let's split the bill."},
