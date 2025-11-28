@@ -774,36 +774,38 @@ function showResults() {
     }
 
     if (quizMode === 'random') {
-        // For random mode, hide scoring stats and show progress
+        // For random mode, show correct/wrong counts
         const remainingCount = getRandomModeRemainingCount();
+        const correctAnswers = quizResults.filter(r => r.correct).length;
+        const wrongAnswers = quizResults.filter(r => !r.correct).length;
 
-        document.getElementById('finalCorrect').textContent = `${remainingCount}개`;
-        document.getElementById('finalWrong').textContent = `${randomModeCompleteRounds}라운드`;
-        document.getElementById('finalScore').textContent = `${quizResults.length}개`;
+        document.getElementById('finalCorrect').textContent = correctAnswers;
+        document.getElementById('finalWrong').textContent = wrongAnswers;
+        document.getElementById('finalScore').textContent = `${remainingCount}개`;
 
         // Update stat labels for random mode
         const statItems = document.querySelectorAll('#resultScreen .stat-item');
         if (statItems.length >= 3) {
             const labels = statItems[0].querySelector('.stat-label');
-            if (labels) labels.textContent = '남은 문제';
+            if (labels) labels.textContent = '정답';
 
             const labelsWrong = statItems[1].querySelector('.stat-label');
-            if (labelsWrong) labelsWrong.textContent = '완성 라운드';
+            if (labelsWrong) labelsWrong.textContent = '오답';
 
             const labelsScore = statItems[2].querySelector('.stat-label');
-            if (labelsScore) labelsScore.textContent = '이번 세트';
+            if (labelsScore) labelsScore.textContent = '남은 문제';
         }
 
-        // Build result list for random mode - no correct/wrong indication
+        // Build result list for random mode with correct/wrong indication
         const resultList = document.getElementById('resultList');
         resultList.innerHTML = '<h2 style="margin-bottom: 15px;">학습한 표현</h2>';
 
         quizResults.forEach((result, index) => {
             const item = document.createElement('div');
-            item.className = 'result-item correct'; // Always show as neutral
+            item.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
 
             let html = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}.</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
                 <div class="korean">${result.question.ko}</div>
                 <div class="english">${result.question.en}</div>
             `;
