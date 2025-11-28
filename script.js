@@ -22,6 +22,23 @@ let randomModeProgress = []; // Track which sentences have been tested in curren
 let speechSynthesis = window.speechSynthesis;
 let currentUtterance = null;
 
+// Function to extract English from Korean dialogue box (A or B's response)
+function extractEnglishFromKorean(koText) {
+    // Try to find English after "A:"
+    let match = koText.match(/A:\s*([A-Za-z][^<]*)/);
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+
+    // Try to find English after "B:"
+    match = koText.match(/<br\s*\/?>\s*B:\s*([A-Za-z][^<]*)/i);
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+
+    return '';
+}
+
 // Function to speak English text
 function speakEnglish(text) {
     // Cancel any ongoing speech
@@ -469,8 +486,11 @@ function loadQuestion() {
         document.getElementById('wrongProgressBar').style.width = progress + '%';
     }
 
-    // Speak the English answer
-    speakEnglish(question.en);
+    // Speak the English part from the Korean dialogue box (B's response)
+    const englishInQuestion = extractEnglishFromKorean(question.ko);
+    if (englishInQuestion) {
+        speakEnglish(englishInQuestion);
+    }
 }
 
 // Start recording with 10 second timeout
