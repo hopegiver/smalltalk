@@ -404,7 +404,7 @@ function loadQuestion() {
     const progress = ((currentQuestionIndex) / currentQuizSet.length) * 100;
 
     if (quizMode === 'smart') {
-        document.getElementById('smartQuestionText').textContent = question.ko;
+        document.getElementById('smartQuestionText').innerHTML = question.ko;
         document.getElementById('smartCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
         document.getElementById('smartCorrect').textContent = correctCount;
         document.getElementById('smartTotalSessions').textContent = `${totalTestSessions}회`;
@@ -428,14 +428,14 @@ function loadQuestion() {
     } else if (quizMode === 'random') {
         const remainingCount = getRandomModeRemainingCount();
 
-        document.getElementById('randomQuestionText').textContent = question.ko;
+        document.getElementById('randomQuestionText').innerHTML = question.ko;
         document.getElementById('randomCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
         document.getElementById('randomRemaining').textContent = `${remainingCount}개`;
         document.getElementById('randomRounds').textContent = `${randomModeCompleteRounds}라운드`;
         document.getElementById('randomProgressBar').style.width = progress + '%';
 
     } else if (quizMode === 'wrong') {
-        document.getElementById('wrongQuestionText').textContent = question.ko;
+        document.getElementById('wrongQuestionText').innerHTML = question.ko;
         document.getElementById('wrongCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
         document.getElementById('wrongCorrect').textContent = correctCount;
         document.getElementById('wrongTotalSessions').textContent = `${totalTestSessions}회`;
