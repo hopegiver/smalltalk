@@ -442,8 +442,8 @@ function loadQuestion() {
 
         document.getElementById('randomQuestionText').innerHTML = question.ko;
         document.getElementById('randomCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+        document.getElementById('randomCorrect').textContent = correctCount;
         document.getElementById('randomRemaining').textContent = `${remainingCount}개`;
-        document.getElementById('randomRounds').textContent = `${randomModeCompleteRounds}라운드`;
         document.getElementById('randomProgressBar').style.width = progress + '%';
 
     } else if (quizMode === 'wrong') {
@@ -496,26 +496,23 @@ function checkAnswer() {
     const question = currentQuizSet[currentQuestionIndex];
     
     if (quizMode === 'random') {
-        // For random mode, just show the answer without scoring
-        // Update progress (just increment attempts)
+        // For random mode, just show the answer without scoring yet
+        // Don't update attempts here - will be done when user clicks 맞음/틀림
         const progress = loadProgress();
         const progIndex = progress.findIndex(p => p.id === question.id);
         if (progIndex !== -1) {
-            progress[progIndex].attempts++; // Increment attempts count
             progress[progIndex].lastSeen = Date.now();
             saveProgress(progress);
         }
 
-        // Store result (no correct/incorrect for random mode)
+        // Store result placeholder (will be updated when user clicks 맞음/틀림)
         quizResults.push({
             question: question,
             userAnswer: '',
-            correct: true // Always true for random mode since there's no wrong answer
+            correct: true // Will be updated in markRandomAnswer
         });
 
-        // DON'T increment correctCount for random mode
-
-        // Show answer screen without correctness indication
+        // Show answer screen
         showAnswerScreenForRandom(question);
         return;
     }
@@ -622,11 +619,50 @@ function showAnswerScreenForRandom(question) {
 
     document.getElementById('randomCorrectAnswer').textContent = question.en;
     document.getElementById('randomAnswerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+    document.getElementById('randomAnswerCorrect').textContent = correctCount;
     document.getElementById('randomAnswerRemaining').textContent = `${remainingCount}개`;
-    document.getElementById('randomAnswerRounds').textContent = `${randomModeCompleteRounds}라운드`;
     document.getElementById('randomAnswerProgressBar').style.width = answerProgress + '%';
 
     showScreen('randomAnswerScreen');
+}
+
+// Mark random mode answer as correct or wrong
+function markRandomAnswer(isCorrect) {
+    const question = currentQuizSet[currentQuestionIndex];
+    const progress = loadProgress();
+    const progIndex = progress.findIndex(p => p.id === question.id);
+
+    if (progIndex !== -1) {
+        // Always increment attempts when answered
+        progress[progIndex].attempts++;
+
+        if (isCorrect) {
+            // Correct answer - increase score
+            progress[progIndex].score += 10;
+            correctCount++;
+        } else {
+            // Wrong answer - decrease score and mark as wrong
+            progress[progIndex].score -= 20;
+            progress[progIndex].wrongCount++;
+        }
+        saveProgress(progress);
+    }
+
+    // Update daily statistics
+    updateDailyStats(isCorrect);
+
+    // Update the result
+    quizResults[quizResults.length - 1].correct = isCorrect;
+
+    // Move to next question
+    currentQuestionIndex++;
+
+    // Show appropriate quiz screen based on mode
+    if (quizMode === 'random') {
+        showScreen('randomQuizScreen');
+    }
+
+    loadQuestion();
 }
 
 // Show answer screen
