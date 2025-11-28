@@ -422,21 +422,6 @@ function loadQuestion() {
         document.getElementById('smartTotalSessions').textContent = `${totalTestSessions}회`;
         document.getElementById('smartProgressBar').style.width = progress + '%';
 
-        // Reset transcript and start recording
-        currentTranscript = '';
-        const transcriptEl = document.getElementById('smartTranscript');
-        transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
-        transcriptEl.onclick = () => {
-            if (!isRecording) {
-                startRecording();
-            }
-        };
-        transcriptEl.style.cursor = 'pointer';
-
-        setTimeout(() => {
-            startRecording();
-        }, 500);
-
     } else if (quizMode === 'random') {
         const remainingCount = getRandomModeRemainingCount();
 
@@ -452,21 +437,6 @@ function loadQuestion() {
         document.getElementById('wrongCorrect').textContent = correctCount;
         document.getElementById('wrongTotalSessions').textContent = `${totalTestSessions}회`;
         document.getElementById('wrongProgressBar').style.width = progress + '%';
-
-        // Reset transcript and start recording
-        currentTranscript = '';
-        const transcriptEl = document.getElementById('wrongTranscript');
-        transcriptEl.textContent = '당신의 답변이 여기에 표시됩니다...';
-        transcriptEl.onclick = () => {
-            if (!isRecording) {
-                startRecording();
-            }
-        };
-        transcriptEl.style.cursor = 'pointer';
-
-        setTimeout(() => {
-            startRecording();
-        }, 500);
     }
 }
 
@@ -494,80 +464,31 @@ function startRecording() {
 // Check answer
 function checkAnswer() {
     const question = currentQuizSet[currentQuestionIndex];
-    
-    if (quizMode === 'random') {
-        // For random mode, just show the answer without scoring yet
-        // Don't update attempts here - will be done when user clicks 맞음/틀림
-        const progress = loadProgress();
-        const progIndex = progress.findIndex(p => p.id === question.id);
-        if (progIndex !== -1) {
-            progress[progIndex].lastSeen = Date.now();
-            saveProgress(progress);
-        }
 
-        // Store result placeholder (will be updated when user clicks 맞음/틀림)
-        quizResults.push({
-            question: question,
-            userAnswer: '',
-            correct: true // Will be updated in markRandomAnswer
-        });
-
-        // Show answer screen
-        showAnswerScreenForRandom(question);
-        return;
-    }
-
-    // Clear timeout if exists (for smart/wrong modes)
-    if (recognitionTimeout) {
-        clearTimeout(recognitionTimeout);
-        recognitionTimeout = null;
-    }
-
-    // Disable auto-restart and stop recognition
-    shouldRestart = false;
-    try {
-        recognition.stop();
-    } catch (e) {
-        console.log('Recognition stop error');
-    }
-
-    const userAnswer = currentTranscript.toLowerCase().trim();
-    const correctAnswer = question.en.toLowerCase().trim();
-
-    // Simple similarity check
-    const isCorrect = calculateSimilarity(userAnswer, correctAnswer) > 0.7;
-
-    // Update progress
+    // For all modes, just show the answer without scoring yet
+    // Don't update attempts here - will be done when user clicks 맞음/틀림
     const progress = loadProgress();
     const progIndex = progress.findIndex(p => p.id === question.id);
     if (progIndex !== -1) {
-        progress[progIndex].attempts++; // Increment attempts count
-        if (isCorrect) {
-            progress[progIndex].score += 10; // Add 10 points for correct answer
-        } else {
-            progress[progIndex].score -= 20; // Subtract 20 points for wrong answer
-            progress[progIndex].wrongCount++; // Increment wrong count
-        }
         progress[progIndex].lastSeen = Date.now();
         saveProgress(progress);
     }
 
-    // Update daily statistics
-    updateDailyStats(isCorrect);
-
-    // Store result
+    // Store result placeholder (will be updated when user clicks 맞음/틀림)
     quizResults.push({
         question: question,
-        userAnswer: currentTranscript,
-        correct: isCorrect
+        userAnswer: '',
+        correct: true // Will be updated in markAnswer
     });
 
-    if (isCorrect) {
-        correctCount++;
+    // Show answer screen based on mode
+    if (quizMode === 'random') {
+        showAnswerScreenForRandom(question);
+    } else if (quizMode === 'smart') {
+        showAnswerScreenForSmart(question);
+    } else if (quizMode === 'wrong') {
+        showAnswerScreenForWrong(question);
     }
-
-    // Show answer screen
-    showAnswerScreen(question, currentTranscript, isCorrect);
 }
 
 // Calculate similarity between two strings
@@ -626,8 +547,34 @@ function showAnswerScreenForRandom(question) {
     showScreen('randomAnswerScreen');
 }
 
-// Mark random mode answer as correct or wrong
-function markRandomAnswer(isCorrect) {
+// Show answer screen for smart mode
+function showAnswerScreenForSmart(question) {
+    const answerProgress = ((currentQuestionIndex + 1) / currentQuizSet.length) * 100;
+
+    document.getElementById('smartCorrectAnswer').textContent = question.en;
+    document.getElementById('smartAnswerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+    document.getElementById('smartAnswerCorrect').textContent = correctCount;
+    document.getElementById('smartAnswerTotalSessions').textContent = `${totalTestSessions}회`;
+    document.getElementById('smartAnswerProgressBar').style.width = answerProgress + '%';
+
+    showScreen('smartAnswerScreen');
+}
+
+// Show answer screen for wrong mode
+function showAnswerScreenForWrong(question) {
+    const answerProgress = ((currentQuestionIndex + 1) / currentQuizSet.length) * 100;
+
+    document.getElementById('wrongCorrectAnswer').textContent = question.en;
+    document.getElementById('wrongAnswerCurrentQuestion').textContent = `${currentQuestionIndex + 1}/${currentQuizSet.length}`;
+    document.getElementById('wrongAnswerCorrect').textContent = correctCount;
+    document.getElementById('wrongAnswerTotalSessions').textContent = `${totalTestSessions}회`;
+    document.getElementById('wrongAnswerProgressBar').style.width = answerProgress + '%';
+
+    showScreen('wrongAnswerScreen');
+}
+
+// Mark answer as correct or wrong (for all modes)
+function markAnswer(isCorrect) {
     const question = currentQuizSet[currentQuestionIndex];
     const progress = loadProgress();
     const progIndex = progress.findIndex(p => p.id === question.id);
@@ -658,11 +605,20 @@ function markRandomAnswer(isCorrect) {
     currentQuestionIndex++;
 
     // Show appropriate quiz screen based on mode
-    if (quizMode === 'random') {
+    if (quizMode === 'smart') {
+        showScreen('smartQuizScreen');
+    } else if (quizMode === 'random') {
         showScreen('randomQuizScreen');
+    } else if (quizMode === 'wrong') {
+        showScreen('wrongQuizScreen');
     }
 
     loadQuestion();
+}
+
+// Keep backward compatibility
+function markRandomAnswer(isCorrect) {
+    markAnswer(isCorrect);
 }
 
 // Show answer screen
@@ -724,7 +680,8 @@ function getRandomModeTestedCount() {
 // Get random mode remaining count
 function getRandomModeRemainingCount() {
     const testedCount = getRandomModeTestedCount();
-    return sentences.length - testedCount;
+    // Prevent negative count - it will reset to full count when starting next quiz
+    return Math.max(0, sentences.length - testedCount);
 }
 
 // Next question
@@ -848,10 +805,6 @@ function showResults() {
                 <div class="korean">${result.question.ko}</div>
                 <div class="english">정답: ${result.question.en}</div>
             `;
-
-            if (!result.correct) {
-                html += `<div class="your-answer">당신의 답변: ${result.userAnswer || '(답변 없음)'}</div>`;
-            }
 
             item.innerHTML = html;
             resultList.appendChild(item);

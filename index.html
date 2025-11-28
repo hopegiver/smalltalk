@@ -156,12 +156,7 @@
 
                 <div class="question-box" id="smartQuestionText">한글 문장이 여기에 표시됩니다</div>
 
-                <div class="recording-indicator" id="smartRecordingIndicator">
-                    <div class="recording-dot"></div>
-                    <span>녹음 중... 영어로 말해보세요</span>
-                </div>
-
-                <div class="transcript" id="smartTranscript">터치하면 다시 녹음할 수 있어요</div>
+                <div class="random-instruction" style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">확인 버튼을 눌러 정답을 확인하세요</div>
 
                 <div class="btn-group">
                     <button class="btn" onclick="checkAnswer()">확인</button>
@@ -233,12 +228,7 @@
 
                 <div class="question-box" id="wrongQuestionText">한글 문장이 여기에 표시됩니다</div>
 
-                <div class="recording-indicator" id="wrongRecordingIndicator">
-                    <div class="recording-dot"></div>
-                    <span>녹음 중... 영어로 말해보세요</span>
-                </div>
-
-                <div class="transcript" id="wrongTranscript">터치하면 다시 녹음할 수 있어요</div>
+                <div class="random-instruction" style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">확인 버튼을 눌러 정답을 확인하세요</div>
 
                 <div class="btn-group">
                     <button class="btn" onclick="checkAnswer()">확인</button>
@@ -272,18 +262,18 @@
                     </div>
                 </div>
 
-                <div class="correct-answer-box" id="smartCorrectAnswerBox">
+                <div class="correct-answer-box">
                     <div class="answer-label">정답</div>
                     <div id="smartCorrectAnswer" class="correct-answer-text">Correct answer here</div>
                 </div>
 
-                <div class="user-answer-box">
-                    <div class="answer-label-small">당신의 답변</div>
-                    <div id="smartUserAnswer" class="user-answer-text">Your answer here</div>
-                </div>
+                <div class="random-instruction" style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">맞았는지 틀렸는지 선택하세요</div>
 
                 <div class="btn-group">
-                    <button class="btn" onclick="nextQuestion()">다음</button>
+                    <button class="btn" onclick="markAnswer(true)" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">맞음</button>
+                    <button class="btn" onclick="markAnswer(false)" style="background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);">틀림</button>
+                </div>
+                <div class="btn-group" style="margin-top: 10px;">
                     <button class="btn secondary" onclick="goHome()">처음으로</button>
                 </div>
             </div>
@@ -356,18 +346,18 @@
                     </div>
                 </div>
 
-                <div class="correct-answer-box" id="wrongCorrectAnswerBox">
+                <div class="correct-answer-box">
                     <div class="answer-label">정답</div>
                     <div id="wrongCorrectAnswer" class="correct-answer-text">Correct answer here</div>
                 </div>
 
-                <div class="user-answer-box">
-                    <div class="answer-label-small">당신의 답변</div>
-                    <div id="wrongUserAnswer" class="user-answer-text">Your answer here</div>
-                </div>
+                <div class="random-instruction" style="padding: 20px; text-align: center; background: #f5f5f5; border-radius: 10px; margin: 20px 0;">맞았는지 틀렸는지 선택하세요</div>
 
                 <div class="btn-group">
-                    <button class="btn" onclick="nextQuestion()">다음</button>
+                    <button class="btn" onclick="markAnswer(true)" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">맞음</button>
+                    <button class="btn" onclick="markAnswer(false)" style="background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);">틀림</button>
+                </div>
+                <div class="btn-group" style="margin-top: 10px;">
                     <button class="btn secondary" onclick="goHome()">처음으로</button>
                 </div>
             </div>
