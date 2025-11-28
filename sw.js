@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smalltalk-v31'; // Increment version when updating
+const CACHE_NAME = 'smalltalk-v32'; // Increment version when updating
 const urlsToCache = [
   '/',
   '/index.html',

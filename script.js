@@ -18,6 +18,36 @@ let totalTestSessions = 0; // Total number of test sessions completed
 let randomModeCompleteRounds = 0; // Number of complete rounds in random mode
 let randomModeProgress = []; // Track which sentences have been tested in current round
 
+// TTS (Text-to-Speech)
+let speechSynthesis = window.speechSynthesis;
+let currentUtterance = null;
+
+// Function to speak English text
+function speakEnglish(text) {
+    // Cancel any ongoing speech
+    if (currentUtterance) {
+        speechSynthesis.cancel();
+    }
+
+    // Remove HTML tags and A:, B: prefixes if present
+    let cleanText = text.replace(/<br\s*\/?>/gi, ' ').replace(/^[AB]:\s*/gi, '').trim();
+
+    // Create new utterance
+    currentUtterance = new SpeechSynthesisUtterance(cleanText);
+    currentUtterance.lang = 'en-US';
+    currentUtterance.rate = 0.9; // Slightly slower for learning
+
+    speechSynthesis.speak(currentUtterance);
+}
+
+// Function to stop TTS
+function stopTTS() {
+    if (speechSynthesis) {
+        speechSynthesis.cancel();
+    }
+    currentUtterance = null;
+}
+
 // Load data from JSON file
 async function loadData() {
     try {
@@ -438,6 +468,9 @@ function loadQuestion() {
         document.getElementById('wrongTotalSessions').textContent = `${totalTestSessions}회`;
         document.getElementById('wrongProgressBar').style.width = progress + '%';
     }
+
+    // Speak the English answer
+    speakEnglish(question.en);
 }
 
 // Start recording with 10 second timeout
@@ -545,6 +578,9 @@ function showAnswerScreenForRandom(question) {
     document.getElementById('randomAnswerProgressBar').style.width = answerProgress + '%';
 
     showScreen('randomAnswerScreen');
+
+    // Speak the English answer
+    speakEnglish(question.en);
 }
 
 // Show answer screen for smart mode
@@ -558,6 +594,9 @@ function showAnswerScreenForSmart(question) {
     document.getElementById('smartAnswerProgressBar').style.width = answerProgress + '%';
 
     showScreen('smartAnswerScreen');
+
+    // Speak the English answer
+    speakEnglish(question.en);
 }
 
 // Show answer screen for wrong mode
@@ -571,6 +610,9 @@ function showAnswerScreenForWrong(question) {
     document.getElementById('wrongAnswerProgressBar').style.width = answerProgress + '%';
 
     showScreen('wrongAnswerScreen');
+
+    // Speak the English answer
+    speakEnglish(question.en);
 }
 
 // Mark answer as correct or wrong (for all modes)
@@ -874,6 +916,9 @@ function restartQuiz() {
 
 // Go back to home (cancel current quiz or from result screen)
 function goHome() {
+    // Stop TTS
+    stopTTS();
+
     // Clear recognition timeout
     if (recognitionTimeout) {
         clearTimeout(recognitionTimeout);
@@ -914,6 +959,9 @@ function goHome() {
 
 // Show screen
 function showScreen(screenId, addToHistory = true) {
+    // Stop TTS when changing screens
+    stopTTS();
+
     // If going to start screen, clean up everything
     if (screenId === 'startScreen') {
         // Clear recognition timeout
