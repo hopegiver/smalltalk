@@ -679,9 +679,12 @@ function getRandomModeTestedCount() {
 
 // Get random mode remaining count
 function getRandomModeRemainingCount() {
-    const testedCount = getRandomModeTestedCount();
-    // Prevent negative count - it will reset to full count when starting next quiz
-    return Math.max(0, sentences.length - testedCount);
+    const progress = loadProgress();
+    const untestedCount = progress.filter(p => p.attempts === 0).length;
+
+    // If all are untested (just reset) or none are untested (about to reset)
+    // Return the actual count of untested items
+    return untestedCount;
 }
 
 // Next question
