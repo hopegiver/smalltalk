@@ -41,27 +41,29 @@ function extractEnglishFromKorean(koText) {
 }
 
 // Function to extract full English dialogue from Korean text (both A and B in order)
-function extractFullDialogue(koText) {
+function extractFullDialogue(koText, enText) {
     // Split by <br> to get A and B parts
     const parts = koText.split(/<br\s*\/?>/i);
-    let dialogue = [];
+    let result = [];
 
-    parts.forEach(part => {
-        // Check if this part has A: or B: with English text
-        const matchA = part.match(/A:\s*([A-Za-z][^<]*)/);
-        const matchB = part.match(/B:\s*([A-Za-z][^<]*)/);
+    parts.forEach((part, index) => {
+        // Check if this part contains Korean (한글)
+        const hasKorean = /[가-힣]/.test(part);
 
-        if (matchA && matchA[1]) {
-            dialogue.push({ order: 'A', text: 'A: ' + matchA[1].trim() });
-        } else if (matchB && matchB[1]) {
-            dialogue.push({ order: 'B', text: 'B: ' + matchB[1].trim() });
+        if (hasKorean) {
+            // This part has Korean, so add the English answer here
+            const prefix = index === 0 ? 'A: ' : 'B: ';
+            result.push(prefix + enText);
+        } else {
+            // This part is already English, keep it as is with proper prefix
+            const englishMatch = part.match(/[AB]:\s*(.+)/);
+            if (englishMatch) {
+                result.push(part.trim());
+            }
         }
     });
 
-    // Sort to ensure A comes before B (though they should already be in order)
-    dialogue.sort((a, b) => a.order.localeCompare(b.order));
-
-    return dialogue.map(d => d.text).join('\n');
+    return result.join('\n');
 }
 
 // Function to speak English text
@@ -863,7 +865,7 @@ function showResults() {
             item.style.cursor = 'pointer';
 
             // Extract full dialogue in order (A and B's parts)
-            const fullDialogue = extractFullDialogue(result.question.ko);
+            const fullDialogue = extractFullDialogue(result.question.ko, result.question.en);
             const englishInKo = extractEnglishFromKorean(result.question.ko);
             item.onclick = () => {
                 // Speak both A and B parts
@@ -873,8 +875,7 @@ function showResults() {
 
             let html = `
                 <div style="font-weight: bold; margin-bottom: 8px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
-                <div class="english" style="font-size: 1.05em; margin-bottom: 8px; color: #333; white-space: pre-line;">${fullDialogue}</div>
-                <div class="english" style="font-size: 1.15em; font-weight: bold; color: #2c5aa0; text-decoration: underline;">${result.question.en}</div>
+                <div class="english" style="font-size: 1.05em; color: #333; white-space: pre-line;">${fullDialogue}</div>
             `;
 
             item.innerHTML = html;
@@ -912,7 +913,7 @@ function showResults() {
             item.style.cursor = 'pointer';
 
             // Extract full dialogue in order (A and B's parts)
-            const fullDialogue = extractFullDialogue(result.question.ko);
+            const fullDialogue = extractFullDialogue(result.question.ko, result.question.en);
             const englishInKo = extractEnglishFromKorean(result.question.ko);
             item.onclick = () => {
                 // Speak both A and B parts
@@ -922,8 +923,7 @@ function showResults() {
 
             let html = `
                 <div style="font-weight: bold; margin-bottom: 8px;">${index + 1}. ${result.correct ? '⭕' : '❌'}</div>
-                <div class="english" style="font-size: 1.05em; margin-bottom: 8px; color: #333; white-space: pre-line;">${fullDialogue}</div>
-                <div class="english" style="font-size: 1.15em; font-weight: bold; color: #2c5aa0; text-decoration: underline;">${result.question.en}</div>
+                <div class="english" style="font-size: 1.05em; color: #333; white-space: pre-line;">${fullDialogue}</div>
             `;
 
             item.innerHTML = html;
