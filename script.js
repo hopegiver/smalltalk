@@ -74,7 +74,7 @@ function speakEnglish(text) {
     }
 
     // Remove HTML tags and A:, B: prefixes if present
-    let cleanText = text.replace(/<br\s*\/?>/gi, ' ').replace(/^[AB]:\s*/gi, '').trim();
+    let cleanText = text.replace(/<br\s*\/?>/gi, ' ').replace(/^[AB]:\s*/gim, '').trim();
 
     // Store for replay
     lastSpokenText = cleanText;
