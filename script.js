@@ -866,11 +866,9 @@ function showResults() {
 
             // Extract full dialogue in order (A and B's parts)
             const fullDialogue = extractFullDialogue(result.question.ko, result.question.en);
-            const englishInKo = extractEnglishFromKorean(result.question.ko);
             item.onclick = () => {
-                // Speak both A and B parts
-                const fullText = englishInKo + '. ' + result.question.en;
-                speakEnglish(fullText);
+                // Speak full dialogue in order (A then B)
+                speakEnglish(fullDialogue);
             };
 
             let html = `
@@ -914,11 +912,9 @@ function showResults() {
 
             // Extract full dialogue in order (A and B's parts)
             const fullDialogue = extractFullDialogue(result.question.ko, result.question.en);
-            const englishInKo = extractEnglishFromKorean(result.question.ko);
             item.onclick = () => {
-                // Speak both A and B parts
-                const fullText = englishInKo + '. ' + result.question.en;
-                speakEnglish(fullText);
+                // Speak full dialogue in order (A then B)
+                speakEnglish(fullDialogue);
             };
 
             let html = `
