@@ -42,21 +42,26 @@ function extractEnglishFromKorean(koText) {
 
 // Function to extract full English dialogue from Korean text (both A and B in order)
 function extractFullDialogue(koText) {
-    let parts = [];
+    // Split by <br> to get A and B parts
+    const parts = koText.split(/<br\s*\/?>/i);
+    let dialogue = [];
 
-    // Extract A's part if it's in English
-    let matchA = koText.match(/A:\s*([A-Za-z][^<]*)/);
-    if (matchA && matchA[1]) {
-        parts.push('A: ' + matchA[1].trim());
-    }
+    parts.forEach(part => {
+        // Check if this part has A: or B: with English text
+        const matchA = part.match(/A:\s*([A-Za-z][^<]*)/);
+        const matchB = part.match(/B:\s*([A-Za-z][^<]*)/);
 
-    // Extract B's part if it's in English
-    let matchB = koText.match(/<br\s*\/?>\s*B:\s*([A-Za-z][^<]*)/i);
-    if (matchB && matchB[1]) {
-        parts.push('B: ' + matchB[1].trim());
-    }
+        if (matchA && matchA[1]) {
+            dialogue.push({ order: 'A', text: 'A: ' + matchA[1].trim() });
+        } else if (matchB && matchB[1]) {
+            dialogue.push({ order: 'B', text: 'B: ' + matchB[1].trim() });
+        }
+    });
 
-    return parts.join('\n');
+    // Sort to ensure A comes before B (though they should already be in order)
+    dialogue.sort((a, b) => a.order.localeCompare(b.order));
+
+    return dialogue.map(d => d.text).join('\n');
 }
 
 // Function to speak English text
